@@ -57,7 +57,7 @@ public class ServiceConfig {
         HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
 
         httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-//        logger.warn("activated HTTP logging");
+        logger.warn("activated HTTP logging");
 //        final var interceptors = List.of(userAgentInterceptor);
         final var interceptors = List.of(userAgentInterceptor, new FixHttpLoggingInterceptor(), httpLoggingInterceptor);
 
