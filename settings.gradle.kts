@@ -14,9 +14,7 @@ dependencyResolutionManagement {
             library("slf4j.api", "org.slf4j", "slf4j-api").versionRef("slf4j")
             library("slf4j.jul", "org.slf4j", "jul-to-slf4j").versionRef("slf4j")
             library("logback", "ch.qos.logback", "logback-classic").version("1.4.14")
-
-
-            library("signalservice", "com.github.turasa", "signal-service-java").version("2.15.3_unofficial_88")
+            library("signalservice", "com.github.turasa", "signal-service-java").version("2.15.3_unofficial_89")
             library("p6spy", "p6spy", "p6spy").version("3.9.1")
             library("sqlite", "org.xerial", "sqlite-jdbc").version("3.44.1.0")
             library("hikari", "com.zaxxer", "HikariCP").version("5.1.0")
