@@ -106,10 +106,13 @@ public class SendHelper {
      * The message is extended with the current expiration timer for the group and the group context.
      */
     public List<SendMessageResult> sendAsGroupMessage(
-            SignalServiceDataMessage.Builder messageBuilder, GroupId groupId, Optional<Long> editTargetTimestamp
+            final SignalServiceDataMessage.Builder messageBuilder,
+            final GroupId groupId,
+            final boolean includeSelf,
+            final Optional<Long> editTargetTimestamp
     ) throws IOException, GroupNotFoundException, NotAGroupMemberException, GroupSendingNotAllowedException {
         final var g = getGroupForSending(groupId);
-        return sendAsGroupMessage(messageBuilder, g, editTargetTimestamp);
+        return sendAsGroupMessage(messageBuilder, g, includeSelf, editTargetTimestamp);
     }
 
     /**
@@ -225,7 +228,7 @@ public class SendHelper {
                 (messageSender, address, unidentifiedAccess) -> messageSender.sendTyping(List.of(address),
                         List.of(unidentifiedAccess),
                         message,
-                        null).get(0));
+                        null).getFirst());
         handleSendMessageResult(result);
         return result;
     }
@@ -302,13 +305,16 @@ public class SendHelper {
     }
 
     private List<SendMessageResult> sendAsGroupMessage(
-            final SignalServiceDataMessage.Builder messageBuilder, final GroupInfo g, Optional<Long> editTargetTimestamp
+            final SignalServiceDataMessage.Builder messageBuilder,
+            final GroupInfo g,
+            final boolean includeSelf,
+            final Optional<Long> editTargetTimestamp
     ) throws IOException, GroupSendingNotAllowedException {
         GroupUtils.setGroupContext(messageBuilder, g);
         messageBuilder.withExpiration(g.getMessageExpirationTimer());
 
         final var message = messageBuilder.build();
-        final var recipients = g.getMembersWithout(account.getSelfRecipientId());
+        final var recipients = includeSelf ? g.getMembers() : g.getMembersWithout(account.getSelfRecipientId());
 
         if (g.isAnnouncementGroup() && !g.isAdmin(account.getSelfRecipientId())) {
             if (message.getBody().isPresent()
@@ -452,6 +458,10 @@ public class SendHelper {
         }
         if (!g.isMember(account.getSelfRecipientId())) {
             throw new NotAGroupMemberException(groupId, g.getTitle());
+        }
+        if (!g.isProfileSharingEnabled()) {
+            g.setProfileSharingEnabled(true);
+            account.getGroupStore().updateGroup(g);
         }
         return g;
     }

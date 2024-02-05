@@ -89,7 +89,7 @@ public interface Manager extends Closeable {
      */
     Map<String, UserStatus> getUserStatus(Set<String> numbers) throws IOException, RateLimitException;
 
-    void updateAccountAttributes(String deviceName) throws IOException;
+    void updateAccountAttributes(String deviceName, Boolean unrestrictedUnidentifiedSender) throws IOException;
 
     Configuration getConfiguration();
 
@@ -172,7 +172,7 @@ public interface Manager extends Closeable {
     );
 
     SendMessageResults sendMessage(
-            Message message, Set<RecipientIdentifier> recipients
+            Message message, Set<RecipientIdentifier> recipients, boolean notifySelf
     ) throws IOException, AttachmentInvalidException, NotAGroupMemberException, GroupNotFoundException, GroupSendingNotAllowedException, UnregisteredRecipientException, InvalidStickerException;
 
     SendMessageResults sendEditMessage(

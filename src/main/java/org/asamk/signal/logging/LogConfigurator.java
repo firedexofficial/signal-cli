@@ -42,7 +42,7 @@ public class LogConfigurator extends ContextAwareBase implements Configurator {
         }});
         final var rootLogger = lc.getLogger(Logger.ROOT_LOGGER_NAME);
 
-        final var defaultLevel = verboseLevel > 1 ? Level.ALL : verboseLevel > 0 ? Level.INFO : Level.WARN;
+        final var defaultLevel = verboseLevel > 2 ? Level.ALL : verboseLevel > 0 ? Level.INFO : Level.WARN;
         rootLogger.setLevel(defaultLevel);
 
         final var consoleLayout = verboseLevel == 0 || logFile != null
@@ -52,6 +52,8 @@ public class LogConfigurator extends ContextAwareBase implements Configurator {
         rootLogger.addAppender(consoleAppender);
 
         lc.getLogger("org.asamk").setLevel(verboseLevel > 1 ? Level.ALL : verboseLevel > 0 ? Level.DEBUG : Level.INFO);
+        lc.getLogger("org.asamk.Signal")
+                .setLevel(verboseLevel > 2 ? Level.ALL : verboseLevel > 1 ? Level.INFO : Level.WARN);
         lc.getLogger("com.zaxxer.hikari.pool.PoolBase")
                 .setLevel(verboseLevel > 2 ? Level.ALL : verboseLevel > 1 ? Level.INFO : Level.WARN);
         lc.getLogger("org.sqlite.core.NativeDB")

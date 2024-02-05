@@ -1,8 +1,7 @@
 use std::path::Path;
 
 use jsonrpsee::async_client::ClientBuilder;
-use jsonrpsee::core::client::SubscriptionClientT;
-use jsonrpsee::core::Error;
+use jsonrpsee::core::client::{Error, SubscriptionClientT};
 use jsonrpsee::http_client::HttpClientBuilder;
 use jsonrpsee::proc_macros::rpc;
 use serde::Deserialize;
@@ -13,6 +12,13 @@ use tokio::net::ToSocketAddrs;
 pub trait Rpc {
     #[method(name = "addDevice", param_kind = map)]
     async fn add_device(
+        &self,
+        account: Option<String>,
+        uri: String,
+    ) -> Result<Value, ErrorObjectOwned>;
+
+    #[method(name = "addStickerPack", param_kind = map)]
+    async fn add_sticker_pack(
         &self,
         account: Option<String>,
         uri: String,
@@ -33,6 +39,15 @@ pub trait Rpc {
         #[allow(non_snake_case)] ignoreRegistered: Option<bool>,
     ) -> Result<Value, ErrorObjectOwned>;
 
+    #[method(name = "getAttachment", param_kind = map)]
+    fn get_attachment(
+        &self,
+        account: Option<String>,
+        id: String,
+        recipient: Option<String>,
+        group_id: Option<String>,
+    ) -> Result<Value, ErrorObjectOwned>;
+
     #[method(name = "getUserStatus", param_kind = map)]
     fn get_user_status(
         &self,
@@ -42,6 +57,16 @@ pub trait Rpc {
 
     #[method(name = "joinGroup", param_kind = map)]
     fn join_group(&self, account: Option<String>, uri: String) -> Result<Value, ErrorObjectOwned>;
+
+    #[allow(non_snake_case)]
+    #[method(name = "finishChangeNumber", param_kind = map)]
+    fn finish_change_number(
+        &self,
+        account: Option<String>,
+        number: String,
+        verificationCode: String,
+        pin: Option<String>,
+    ) -> Result<Value, ErrorObjectOwned>;
 
     #[method(name = "finishLink", param_kind = map)]
     fn finish_link(
@@ -106,6 +131,7 @@ pub trait Rpc {
         account: Option<String>,
         recipient: String,
         forget: bool,
+        hide: bool,
     ) -> Result<Value, ErrorObjectOwned>;
 
     #[method(name = "removeDevice", param_kind = map)]
@@ -128,25 +154,33 @@ pub trait Rpc {
         #[allow(non_snake_case)] noteToSelf: bool,
     ) -> Result<Value, ErrorObjectOwned>;
 
+    #[allow(non_snake_case)]
     #[method(name = "send", param_kind = map)]
     fn send(
         &self,
         account: Option<String>,
         recipients: Vec<String>,
-        #[allow(non_snake_case)] groupIds: Vec<String>,
-        #[allow(non_snake_case)] noteToSelf: bool,
-        #[allow(non_snake_case)] endSession: bool,
+        groupIds: Vec<String>,
+        noteToSelf: bool,
+        endSession: bool,
         message: String,
         attachments: Vec<String>,
         mentions: Vec<String>,
-        #[allow(non_snake_case)] quoteTimestamp: Option<u64>,
-        #[allow(non_snake_case)] quoteAuthor: Option<String>,
-        #[allow(non_snake_case)] quoteMessage: Option<String>,
-        #[allow(non_snake_case)] quoteMention: Vec<String>,
-        #[allow(non_snake_case)] quoteAttachment: Vec<String>,
+        textStyle: Vec<String>,
+        quoteTimestamp: Option<u64>,
+        quoteAuthor: Option<String>,
+        quoteMessage: Option<String>,
+        quoteMention: Vec<String>,
+        quoteTextStyle: Vec<String>,
+        quoteAttachment: Vec<String>,
+        preview_url: Option<String>,
+        preview_title: Option<String>,
+        preview_description: Option<String>,
+        preview_image: Option<String>,
         sticker: Option<String>,
-        #[allow(non_snake_case)] storyTimestamp: Option<u64>,
-        #[allow(non_snake_case)] storyAuthor: Option<String>,
+        storyTimestamp: Option<u64>,
+        storyAuthor: Option<String>,
+        editTimestamp: Option<u64>,
     ) -> Result<Value, ErrorObjectOwned>;
 
     #[method(name = "sendContacts", param_kind = map)]
@@ -207,6 +241,15 @@ pub trait Rpc {
         captcha: String,
     ) -> Result<Value, ErrorObjectOwned>;
 
+    #[method(name = "startChangeNumber", param_kind = map)]
+    fn start_change_number(
+        &self,
+        account: Option<String>,
+        number: String,
+        voice: bool,
+        captcha: Option<String>,
+    ) -> Result<Value, ErrorObjectOwned>;
+
     #[method(name = "startLink", param_kind = map)]
     fn start_link(&self, account: Option<String>) -> Result<JsonLink, ErrorObjectOwned>;
 
@@ -234,18 +277,20 @@ pub trait Rpc {
         #[allow(non_snake_case)] deleteAccount: bool,
     ) -> Result<Value, ErrorObjectOwned>;
 
+    #[allow(non_snake_case)]
     #[method(name = "updateAccount", param_kind = map)]
     fn update_account(
         &self,
         account: Option<String>,
-        #[allow(non_snake_case)] deviceName: Option<String>,
+        deviceName: Option<String>,
+        unrestrictedUnidentifiedSender: Option<bool>,
     ) -> Result<Value, ErrorObjectOwned>;
 
     #[method(name = "updateConfiguration", param_kind = map)]
     fn update_configuration(
         &self,
         account: Option<String>,
-        #[allow(non_snake_case)] readReceiptes: Option<bool>,
+        #[allow(non_snake_case)] readReceipts: Option<bool>,
         #[allow(non_snake_case)] unidentifiedDeliveryIndicators: Option<bool>,
         #[allow(non_snake_case)] typingIndicators: Option<bool>,
         #[allow(non_snake_case)] linkPreviews: Option<bool>,
@@ -328,7 +373,9 @@ pub struct JsonLink {
     pub device_link_uri: String,
 }
 
-pub async fn connect_tcp(tcp: impl ToSocketAddrs) -> Result<impl SubscriptionClientT, Error> {
+pub async fn connect_tcp(
+    tcp: impl ToSocketAddrs,
+) -> Result<impl SubscriptionClientT, std::io::Error> {
     let (sender, receiver) = super::transports::tcp::connect(tcp).await?;
 
     Ok(ClientBuilder::default().build_with_tokio(sender, receiver))
@@ -336,7 +383,7 @@ pub async fn connect_tcp(tcp: impl ToSocketAddrs) -> Result<impl SubscriptionCli
 
 pub async fn connect_unix(
     socket_path: impl AsRef<Path>,
-) -> Result<impl SubscriptionClientT, Error> {
+) -> Result<impl SubscriptionClientT, std::io::Error> {
     let (sender, receiver) = super::transports::ipc::connect(socket_path).await?;
 
     Ok(ClientBuilder::default().build_with_tokio(sender, receiver))

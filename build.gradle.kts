@@ -3,10 +3,10 @@ plugins {
     application
     eclipse
     `check-lib-versions`
-    id("org.graalvm.buildtools.native") version "0.9.28"
+    id("org.graalvm.buildtools.native") version "0.10.0"
 }
 
-version = "0.12.7-SNAPSHOT"
+version = "0.12.8-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -26,6 +26,8 @@ graalvmNative {
     binaries {
         this["main"].run {
             buildArgs.add("--install-exit-handlers")
+            buildArgs.add("-Dfile.encoding=UTF-8")
+            buildArgs.add("-J-Dfile.encoding=UTF-8")
             resources.autodetect()
             configurationFileDirectories.from(file("graalvm-config-dir"))
             if (System.getenv("GRAALVM_HOME") == null) {

@@ -121,7 +121,9 @@ public class DbusManagerImpl implements Manager {
     }
 
     @Override
-    public void updateAccountAttributes(final String deviceName) throws IOException {
+    public void updateAccountAttributes(
+            final String deviceName, final Boolean unrestrictedUnidentifiedSender
+    ) throws IOException {
         if (deviceName != null) {
             final var devicePath = signal.getThisDevice();
             getRemoteObject(devicePath, Signal.Device.class).Set("org.asamk.Signal.Device", "Name", deviceName);
@@ -397,7 +399,7 @@ public class DbusManagerImpl implements Manager {
 
     @Override
     public SendMessageResults sendMessage(
-            final Message message, final Set<RecipientIdentifier> recipients
+            final Message message, final Set<RecipientIdentifier> recipients, final boolean notifySelf
     ) throws IOException, AttachmentInvalidException, NotAGroupMemberException, GroupNotFoundException, GroupSendingNotAllowedException {
         return handleMessage(recipients,
                 numbers -> signal.sendMessage(message.messageText(), message.attachments(), numbers),
@@ -668,7 +670,18 @@ public class DbusManagerImpl implements Manager {
             }
             return Recipient.newBuilder()
                     .withAddress(new RecipientAddress(null, n))
-                    .withContact(new Contact(contactName, null, null, 0, contactBlocked, false, false, false))
+                    .withContact(new Contact(contactName,
+                            null,
+                            null,
+                            null,
+                            0,
+                            0,
+                            false,
+                            contactBlocked,
+                            false,
+                            false,
+                            false,
+                            null))
                     .build();
         }).filter(Objects::nonNull).toList();
     }
@@ -847,7 +860,7 @@ public class DbusManagerImpl implements Manager {
                                 Optional.empty(),
                                 Optional.empty(),
                                 List.of(),
-                                List.of(),
+                                getMentions(extras),
                                 List.of(),
                                 List.of())),
                         Optional.empty(),
@@ -891,7 +904,7 @@ public class DbusManagerImpl implements Manager {
                                         Optional.empty(),
                                         Optional.empty(),
                                         List.of(),
-                                        List.of(),
+                                        getMentions(extras),
                                         List.of(),
                                         List.of()))),
                         Optional.empty(),
@@ -968,7 +981,7 @@ public class DbusManagerImpl implements Manager {
                                         Optional.empty(),
                                         Optional.empty(),
                                         List.of(),
-                                        List.of(),
+                                        getMentions(extras),
                                         List.of(),
                                         List.of())),
                                 Optional.empty(),
@@ -1035,6 +1048,19 @@ public class DbusManagerImpl implements Manager {
                     getValue(a, "isGif"),
                     getValue(a, "isBorderless"));
         }).toList();
+    }
+
+    private List<MessageEnvelope.Data.Mention> getMentions(final Map<String, Variant<?>> extras) {
+        if (!extras.containsKey("mentions")) {
+            return List.of();
+        }
+
+        final List<DBusMap<String, Variant<?>>> mentions = getValue(extras, "mentions");
+        return mentions.stream()
+                .map(a -> new MessageEnvelope.Data.Mention(new RecipientAddress(null, getValue(a, "recipient")),
+                        getValue(a, "start"),
+                        getValue(a, "length")))
+                .toList();
     }
 
     @Override

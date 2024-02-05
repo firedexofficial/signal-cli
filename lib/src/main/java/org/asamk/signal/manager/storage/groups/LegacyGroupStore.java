@@ -45,7 +45,7 @@ public class LegacyGroupStore {
             if (g instanceof Storage.GroupV1 g1) {
                 final var members = g1.members.stream().map(m -> {
                     if (m.recipientId == null) {
-                        return recipientResolver.resolveRecipient(new RecipientAddress(ServiceId.parseOrNull(m.uuid),
+                        return recipientResolver.resolveRecipient(new RecipientAddress(ServiceId.ACI.parseOrNull(m.uuid),
                                 m.number));
                     }
 
@@ -59,7 +59,8 @@ public class LegacyGroupStore {
                         g1.color,
                         g1.messageExpirationTime,
                         g1.blocked,
-                        g1.archived);
+                        g1.archived,
+                        null);
             }
 
             final var g2 = (Storage.GroupV2) g;
@@ -76,7 +77,9 @@ public class LegacyGroupStore {
                     loadDecryptedGroupLocked(groupId, groupCachePath),
                     g2.distributionId == null ? DistributionId.create() : DistributionId.from(g2.distributionId),
                     g2.blocked,
+                    true,
                     g2.permissionDenied,
+                    null,
                     recipientResolver);
         }).toList();
 

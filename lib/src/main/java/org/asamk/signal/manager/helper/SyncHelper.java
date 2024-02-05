@@ -79,6 +79,11 @@ public class SyncHelper {
                 .sendSyncMessage(SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.LOCAL_PROFILE));
     }
 
+    public void sendSyncFetchStorageMessage() {
+        context.getSendHelper()
+                .sendSyncMessage(SignalServiceSyncMessage.forFetchLatest(SignalServiceSyncMessage.FetchType.STORAGE_MANIFEST));
+    }
+
     public void sendGroups() throws IOException {
         var groupsFile = IOUtils.createTempFile();
 
@@ -222,7 +227,7 @@ public class SyncHelper {
     }
 
     public SendMessageResult sendKeysMessage() {
-        var keysMessage = new KeysMessage(Optional.ofNullable(account.getStorageKey()),
+        var keysMessage = new KeysMessage(Optional.ofNullable(account.getOrCreateStorageKey()),
                 Optional.ofNullable(account.getOrCreatePinMasterKey()));
         return context.getSendHelper().sendSyncMessage(SignalServiceSyncMessage.forKeys(keysMessage));
     }
@@ -319,7 +324,12 @@ public class SyncHelper {
             final var recipientId = account.getRecipientTrustedResolver().resolveRecipientTrusted(c.getAddress());
             var contact = account.getContactStore().getContact(recipientId);
             final var builder = contact == null ? Contact.newBuilder() : Contact.newBuilder(contact);
-            if (c.getName().isPresent()) {
+            if (c.getName().isPresent() && (
+                    contact == null || (
+                            contact.givenName() == null
+                                    && contact.familyName() == null
+                    )
+            )) {
                 builder.withGivenName(c.getName().get());
                 builder.withFamilyName(null);
             }

@@ -225,19 +225,20 @@ public class DbusSignalImpl implements Signal, AutoCloseable {
     }
 
     @Override
-    public long sendMessage(final String message, final List<String> attachments, final List<String> recipients) {
+    public long sendMessage(final String messageText, final List<String> attachments, final List<String> recipients) {
         try {
-            final var results = m.sendMessage(new Message(message,
-                            attachments,
-                            List.of(),
-                            Optional.empty(),
-                            Optional.empty(),
-                            List.of(),
-                            Optional.empty(),
-                            List.of()),
-                    getSingleRecipientIdentifiers(recipients, m.getSelfNumber()).stream()
-                            .map(RecipientIdentifier.class::cast)
-                            .collect(Collectors.toSet()));
+            final var message = new Message(messageText,
+                    attachments,
+                    List.of(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    List.of(),
+                    Optional.empty(),
+                    List.of());
+            final var recipientIdentifiers = getSingleRecipientIdentifiers(recipients, m.getSelfNumber()).stream()
+                    .map(RecipientIdentifier.class::cast)
+                    .collect(Collectors.toSet());
+            final var results = m.sendMessage(message, recipientIdentifiers, false);
 
             checkSendMessageResults(results);
             return results.timestamp();
@@ -384,17 +385,18 @@ public class DbusSignalImpl implements Signal, AutoCloseable {
 
     @Override
     public long sendNoteToSelfMessage(
-            final String message, final List<String> attachments
+            final String messageText, final List<String> attachments
     ) throws Error.AttachmentInvalid, Error.Failure, Error.UntrustedIdentity {
         try {
-            final var results = m.sendMessage(new Message(message,
+            final var message = new Message(messageText,
                     attachments,
                     List.of(),
                     Optional.empty(),
                     Optional.empty(),
                     List.of(),
                     Optional.empty(),
-                    List.of()), Set.of(RecipientIdentifier.NoteToSelf.INSTANCE));
+                    List.of());
+            final var results = m.sendMessage(message, Set.of(RecipientIdentifier.NoteToSelf.INSTANCE), false);
             checkSendMessageResults(results);
             return results.timestamp();
         } catch (AttachmentInvalidException e) {
@@ -429,16 +431,17 @@ public class DbusSignalImpl implements Signal, AutoCloseable {
     }
 
     @Override
-    public long sendGroupMessage(final String message, final List<String> attachments, final byte[] groupId) {
+    public long sendGroupMessage(final String messageText, final List<String> attachments, final byte[] groupId) {
         try {
-            var results = m.sendMessage(new Message(message,
+            final var message = new Message(messageText,
                     attachments,
                     List.of(),
                     Optional.empty(),
                     Optional.empty(),
                     List.of(),
                     Optional.empty(),
-                    List.of()), Set.of(getGroupRecipientIdentifier(groupId)));
+                    List.of());
+            var results = m.sendMessage(message, Set.of(getGroupRecipientIdentifier(groupId)), false);
             checkSendMessageResults(results);
             return results.timestamp();
         } catch (IOException | InvalidStickerException e) {
@@ -668,7 +671,7 @@ public class DbusSignalImpl implements Signal, AutoCloseable {
     @Override
     public boolean isRegistered(String number) {
         var result = isRegistered(List.of(number));
-        return result.get(0);
+        return result.getFirst();
     }
 
     @Override
@@ -1184,7 +1187,7 @@ public class DbusSignalImpl implements Signal, AutoCloseable {
                 throw new Error.Failure("Only the name of this device can be changed");
             }
             try {
-                m.updateAccountAttributes(name);
+                m.updateAccountAttributes(name, null);
                 // update device list
                 updateDevices();
             } catch (IOException e) {

@@ -32,12 +32,13 @@ public class ServiceConfig {
     public static final boolean AUTOMATIC_NETWORK_RETRY = true;
     public static final int GROUP_MAX_SIZE = 1001;
     public static final int MAXIMUM_ONE_OFF_REQUEST_SIZE = 3;
+    public static final long UNREGISTERED_LIFESPAN = TimeUnit.DAYS.toMillis(30);
 
     public static AccountAttributes.Capabilities getCapabilities(boolean isPrimaryDevice) {
         final var giftBadges = !isPrimaryDevice;
         final var pni = !isPrimaryDevice;
         final var paymentActivation = !isPrimaryDevice;
-        return new AccountAttributes.Capabilities(false, true, true, true, true, giftBadges, pni, paymentActivation);
+        return new AccountAttributes.Capabilities(true, true, true, true, true, giftBadges, pni, paymentActivation);
     }
 
     public static ServiceEnvironmentConfig getServiceEnvironmentConfig(

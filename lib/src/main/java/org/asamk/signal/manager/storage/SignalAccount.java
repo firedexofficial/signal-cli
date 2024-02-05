@@ -154,6 +154,10 @@ public class SignalAccount implements Closeable {
     private final KeyValueEntry<Long> storageManifestVersion = new KeyValueEntry<>("storage-manifest-version",
             long.class,
             -1L);
+    private final KeyValueEntry<Boolean> unrestrictedUnidentifiedAccess = new KeyValueEntry<>(
+            "unrestricted-unidentified-access",
+            Boolean.class,
+            false);
     private boolean isMultiDevice = false;
     private boolean registered = false;
 
@@ -164,6 +168,7 @@ public class SignalAccount implements Closeable {
     private GroupStore groupStore;
     private RecipientStore recipientStore;
     private StickerStore stickerStore;
+    private UnknownStorageIdStore unknownStorageIdStore;
     private ConfigurationStore configurationStore;
     private KeyValueStore keyValueStore;
     private CdsiStore cdsiStore;
@@ -172,6 +177,7 @@ public class SignalAccount implements Closeable {
     private MessageSendLogStore messageSendLogStore;
 
     private AccountDatabase accountDatabase;
+    private RecipientId selfRecipientId;
 
     private SignalAccount(final FileChannel fileChannel, final FileLock lock) {
         this.fileChannel = fileChannel;
@@ -186,10 +192,9 @@ public class SignalAccount implements Closeable {
         final var pair = openFileChannel(fileName, waitForLock);
         try {
             var signalAccount = new SignalAccount(pair.first(), pair.second());
-            logger.trace("Loading account file");
             signalAccount.load(dataPath, accountPath, settings);
-            logger.trace("Migrating legacy parts of account file");
             signalAccount.migrateLegacyConfigs();
+            signalAccount.init();
 
             return signalAccount;
         } catch (Throwable e) {
@@ -236,7 +241,7 @@ public class SignalAccount implements Closeable {
         signalAccount.registered = false;
 
         signalAccount.previousStorageVersion = CURRENT_STORAGE_VERSION;
-        signalAccount.migrateLegacyConfigs();
+        signalAccount.init();
         signalAccount.save();
 
         return signalAccount;
@@ -282,6 +287,7 @@ public class SignalAccount implements Closeable {
         this.number = number;
         this.aciAccountData.setServiceId(aci);
         this.pniAccountData.setServiceId(pni);
+        this.init();
         getRecipientTrustedResolver().resolveSelfRecipientTrusted(getSelfRecipientAddress());
         this.password = password;
         this.profileKey = profileKey;
@@ -333,6 +339,7 @@ public class SignalAccount implements Closeable {
         this.registered = true;
         this.aciAccountData.setServiceId(aci);
         this.pniAccountData.setServiceId(pni);
+        init();
         this.registrationLockPin = pin;
         getKeyValueStore().storeEntry(lastReceiveTimestamp, 0L);
         save();
@@ -352,8 +359,13 @@ public class SignalAccount implements Closeable {
         getAccountDatabase();
     }
 
+    private void init() {
+        this.selfRecipientId = getRecipientTrustedResolver().resolveSelfRecipientTrusted(getSelfRecipientAddress());
+    }
+
     private void migrateLegacyConfigs() {
         if (isPrimaryDevice() && getPniIdentityKeyPair() == null) {
+            logger.trace("Migrating legacy parts of account file");
             setPniIdentityKeyPair(KeyUtils.generateIdentityKeyPair());
         }
     }
@@ -372,8 +384,15 @@ public class SignalAccount implements Closeable {
         }
         getRecipientStore().deleteRecipientData(recipientId);
         getMessageCache().deleteMessages(recipientId);
-        if (recipientAddress.serviceId().isPresent()) {
-            final var serviceId = recipientAddress.serviceId().get();
+        if (recipientAddress.aci().isPresent()) {
+            final var serviceId = recipientAddress.aci().get();
+            aciAccountData.getSessionStore().deleteAllSessions(serviceId);
+            pniAccountData.getSessionStore().deleteAllSessions(serviceId);
+            getIdentityKeyStore().deleteIdentity(serviceId);
+            getSenderKeyStore().deleteAll(serviceId);
+        }
+        if (recipientAddress.pni().isPresent()) {
+            final var serviceId = recipientAddress.pni().get();
             aciAccountData.getSessionStore().deleteAllSessions(serviceId);
             pniAccountData.getSessionStore().deleteAllSessions(serviceId);
             getIdentityKeyStore().deleteIdentity(serviceId);
@@ -418,6 +437,7 @@ public class SignalAccount implements Closeable {
     private void load(
             File dataPath, String accountPath, final Settings settings
     ) throws IOException {
+        logger.trace("Loading account file {}", accountPath);
         this.dataPath = dataPath;
         this.accountPath = accountPath;
         this.settings = settings;
@@ -453,6 +473,9 @@ public class SignalAccount implements Closeable {
             registered = storage.registered;
             number = storage.number;
             username = storage.username;
+            if ("".equals(username)) {
+                username = null;
+            }
             encryptedDeviceName = storage.encryptedDeviceName;
             deviceId = storage.deviceId;
             isMultiDevice = storage.isMultiDevice;
@@ -529,6 +552,9 @@ public class SignalAccount implements Closeable {
         registered = Utils.getNotNullNode(rootNode, "registered").asBoolean();
         if (rootNode.hasNonNull("usernameIdentifier")) {
             username = rootNode.get("usernameIdentifier").asText();
+            if ("".equals(username)) {
+                username = null;
+            }
         }
         if (rootNode.hasNonNull("uuid")) {
             try {
@@ -825,12 +851,16 @@ public class SignalAccount implements Closeable {
                 getContactStore().storeContact(recipientId,
                         new Contact(contact.name,
                                 null,
+                                null,
                                 contact.color,
                                 contact.messageExpirationTime,
+                                0,
+                                false,
                                 contact.blocked,
                                 contact.archived,
                                 false,
-                                false));
+                                false,
+                                null));
 
                 // Store profile keys only in profile store
                 var profileKeyString = contact.profileKey;
@@ -1154,7 +1184,9 @@ public class SignalAccount implements Closeable {
 
     public IdentityKeyStore getIdentityKeyStore() {
         return getOrCreate(() -> identityKeyStore,
-                () -> identityKeyStore = new IdentityKeyStore(getAccountDatabase(), settings.trustNewIdentity()));
+                () -> identityKeyStore = new IdentityKeyStore(getAccountDatabase(),
+                        settings.trustNewIdentity(),
+                        getRecipientStore()));
     }
 
     public GroupStore getGroupStore() {
@@ -1212,9 +1244,13 @@ public class SignalAccount implements Closeable {
         return getOrCreate(() -> keyValueStore, () -> keyValueStore = new KeyValueStore(getAccountDatabase()));
     }
 
+    public UnknownStorageIdStore getUnknownStorageIdStore() {
+        return getOrCreate(() -> unknownStorageIdStore, () -> unknownStorageIdStore = new UnknownStorageIdStore());
+    }
+
     public ConfigurationStore getConfigurationStore() {
         return getOrCreate(() -> configurationStore,
-                () -> configurationStore = new ConfigurationStore(getKeyValueStore()));
+                () -> configurationStore = new ConfigurationStore(getKeyValueStore(), getRecipientStore()));
     }
 
     public MessageCache getMessageCache() {
@@ -1383,7 +1419,7 @@ public class SignalAccount implements Closeable {
     }
 
     public RecipientId getSelfRecipientId() {
-        return getRecipientResolver().resolveRecipient(getSelfRecipientAddress());
+        return selfRecipientId;
     }
 
     public String getSessionId(final String forNumber) {
@@ -1468,22 +1504,29 @@ public class SignalAccount implements Closeable {
         return pinMasterKey;
     }
 
-    public StorageKey getStorageKey() {
-        if (pinMasterKey != null) {
-            return pinMasterKey.deriveStorageServiceKey();
+    public void setMasterKey(MasterKey masterKey) {
+        if (isPrimaryDevice()) {
+            return;
         }
-        return storageKey;
+        this.pinMasterKey = masterKey;
+        save();
     }
 
     public StorageKey getOrCreateStorageKey() {
-        if (isPrimaryDevice()) {
-            return getOrCreatePinMasterKey().deriveStorageServiceKey();
+        if (pinMasterKey != null) {
+            return pinMasterKey.deriveStorageServiceKey();
+        } else if (storageKey != null) {
+            return storageKey;
+        } else if (!isPrimaryDevice() || !isMultiDevice()) {
+            // Only upload storage, if a pin master key already exists or linked devices exist
+            return null;
         }
-        return storageKey;
+
+        return getOrCreatePinMasterKey().deriveStorageServiceKey();
     }
 
     public void setStorageKey(final StorageKey storageKey) {
-        if (storageKey.equals(this.storageKey)) {
+        if (isPrimaryDevice() || storageKey.equals(this.storageKey)) {
             return;
         }
         this.storageKey = storageKey;
@@ -1594,8 +1637,11 @@ public class SignalAccount implements Closeable {
     }
 
     public boolean isUnrestrictedUnidentifiedAccess() {
-        final var profile = getProfileStore().getProfile(getSelfRecipientId());
-        return profile != null && profile.getUnidentifiedAccessMode() == Profile.UnidentifiedAccessMode.UNRESTRICTED;
+        return Boolean.TRUE.equals(getKeyValueStore().getEntry(unrestrictedUnidentifiedAccess));
+    }
+
+    public void setUnrestrictedUnidentifiedAccess(boolean value) {
+        getKeyValueStore().storeEntry(unrestrictedUnidentifiedAccess, value);
     }
 
     public boolean isDiscoverableByPhoneNumber() {
