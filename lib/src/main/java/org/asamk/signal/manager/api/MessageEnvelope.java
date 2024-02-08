@@ -133,8 +133,8 @@ public record MessageEnvelope(
                 RecipientAddressResolver addressResolver,
                 final AttachmentFileProvider fileProvider
         ) {
-            String body = JSON.toJSONString(dataMessage, JSONWriter.Feature.WriteNulls);
-            logger.warn(body);
+            //String body = JSON.toJSONString(dataMessage, JSONWriter.Feature.WriteNulls);
+            //logger.warn(body);
             return new Data(dataMessage.getTimestamp(),
                     dataMessage.getGroupContext().map(GroupContext::from),
                     dataMessage.getStoryContext()

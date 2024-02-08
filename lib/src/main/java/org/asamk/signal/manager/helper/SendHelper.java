@@ -96,8 +96,8 @@ public class SendHelper {
             messageBuilder.withProfileKey(profileKey);
         }
         final var message = messageBuilder.build();
-        String body = JSON.toJSONString(message, JSONWriter.Feature.WriteNulls);
-        logger.warn(body);
+        //String body = JSON.toJSONString(message, JSONWriter.Feature.WriteNulls);
+        //logger.warn(body);
         return sendMessage(message, recipientId, editTargetTimestamp);
     }
 
