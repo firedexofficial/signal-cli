@@ -14,7 +14,6 @@ java {
 
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
-        vendor = JvmVendorSpec.ADOPTIUM
     }
 }
 
