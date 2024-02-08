@@ -129,7 +129,15 @@
   "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.String","java.lang.String","long","java.util.List"] }]
 },
 {
+  "name":"com.alibaba.fastjson2.writer.OWG_2_4_Payment",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.String","java.lang.String","long","java.util.List"] }]
+},
+{
   "name":"com.alibaba.fastjson2.writer.OWG_2_7_Quote",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.String","java.lang.String","long","java.util.List"] }]
+},
+{
+  "name":"com.alibaba.fastjson2.writer.OWG_3_2_PaymentNotification",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.String","java.lang.String","long","java.util.List"] }]
 },
 {
@@ -2490,7 +2498,19 @@
   "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Mention"
 },
 {
-  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Payment"
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Payment",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$PaymentActivation"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$PaymentNotification",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
 },
 {
   "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Quote",
