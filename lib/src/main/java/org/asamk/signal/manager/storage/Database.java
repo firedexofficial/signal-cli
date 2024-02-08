@@ -92,7 +92,8 @@ public abstract class Database implements AutoCloseable {
         final var sqliteConfig = new SQLiteConfig();
         sqliteConfig.setBusyTimeout(60_000);
         sqliteConfig.setTransactionMode(SQLiteConfig.TransactionMode.IMMEDIATE);
-
+        sqliteConfig.setJournalMode(SQLiteConfig.JournalMode.WAL);
+        sqliteConfig.setJournalSizeLimit(512_000);
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:p6spy:sqlite:" + databaseFile);
         config.setDataSourceProperties(sqliteConfig.toProperties());
