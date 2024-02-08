@@ -5,6 +5,12 @@
   }, {
     "pattern":"\\QMETA-INF/services/ch.qos.logback.classic.spi.Configurator\\E"
   }, {
+    "pattern":"\\QMETA-INF/services/com.p6spy.engine.event.JdbcEventListener\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/com.p6spy.engine.logging.LoggingEventListener\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/com.p6spy.engine.spy.JdbcEventListenerFactory\\E"
+  }, {
     "pattern":"\\QMETA-INF/services/com.sun.net.httpserver.spi.HttpServerProvider\\E"
   }, {
     "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
@@ -163,6 +169,8 @@
   }, {
     "pattern":"\\Qcom/google/i18n/phonenumbers/data/PhoneNumberMetadataProto_XK\\E"
   }, {
+    "pattern":"\\Qfastjson2.properties\\E"
+  }, {
     "pattern":"\\Qjni/x86_64-Linux/libjffi-1.2.so\\E"
   }, {
     "pattern":"\\Qkotlin/annotation/annotation.kotlin_builtins\\E"
@@ -195,6 +203,8 @@
   }, {
     "pattern":"\\Qsignal_jni.dll\\E"
   }, {
+    "pattern":"\\Qspy.properties\\E"
+  }, {
     "pattern":"\\Qsqlite-jdbc.properties\\E"
   }, {
     "pattern":"com/google/i18n/phonenumbers/data/.*"
@@ -212,6 +222,8 @@
     "pattern":"java.base:\\Qsun/net/www/content-types.properties\\E"
   }, {
     "pattern":"java.base:\\Qsun/text/resources/LineBreakIteratorData\\E"
+  }, {
+    "pattern":"jdk.jfr:\\Qjdk/jfr/internal/query/view.ini\\E"
   }]},
   "bundles":[{
     "name":"net.sourceforge.argparse4j.internal.ArgumentParserImpl",

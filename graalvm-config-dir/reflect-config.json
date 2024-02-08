@@ -8,6 +8,12 @@
   "name":"[C"
 },
 {
+  "name":"[D"
+},
+{
+  "name":"[F"
+},
+{
   "name":"[I",
   "queryAllDeclaredMethods":true,
   "queryAllPublicMethods":true
@@ -40,6 +46,9 @@
   "name":"[Ljava.sql.Statement;"
 },
 {
+  "name":"[Ljavax.management.openmbean.CompositeData;"
+},
+{
   "name":"[Lorg.whispersystems.signalservice.api.groupsv2.TemporalCredential;"
 },
 {
@@ -47,6 +56,12 @@
 },
 {
   "name":"[Lorg.whispersystems.signalservice.internal.push.GroupStaleDevices;"
+},
+{
+  "name":"[S"
+},
+{
+  "name":"[Z"
 },
 {
   "name":"android.os.Build$VERSION"
@@ -84,6 +99,48 @@
   "name":"char[]"
 },
 {
+  "name":"com.alibaba.fastjson.JSONArray"
+},
+{
+  "name":"com.alibaba.fastjson.JSONObject"
+},
+{
+  "name":"com.alibaba.fastjson2.JSONFactory$CacheItem",
+  "fields":[{"name":"bytes"}, {"name":"chars"}]
+},
+{
+  "name":"com.alibaba.fastjson2.JSONObject",
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"com.alibaba.fastjson2.util.TypeUtils$Cache",
+  "fields":[{"name":"chars"}]
+},
+{
+  "name":"com.alibaba.fastjson2.writer.FieldWriter",
+  "fields":[{"name":"initObjectWriter"}]
+},
+{
+  "name":"com.alibaba.fastjson2.writer.FieldWriterObject",
+  "fields":[{"name":"initValueClass"}]
+},
+{
+  "name":"com.alibaba.fastjson2.writer.OWG_1_28_SignalServiceDataMessage",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.String","java.lang.String","long","java.util.List"] }]
+},
+{
+  "name":"com.alibaba.fastjson2.writer.OWG_2_7_Quote",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.String","java.lang.String","long","java.util.List"] }]
+},
+{
+  "name":"com.alibaba.fastjson2.writer.OWG_3_5_ACI",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.String","java.lang.String","long","java.util.List"] }]
+},
+{
+  "name":"com.alibaba.fastjson2.writer.OWG_4_1_Aci",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.String","java.lang.String","long","java.util.List"] }]
+},
+{
   "name":"com.fasterxml.jackson.annotation.JsonIgnore"
 },
 {
@@ -101,6 +158,51 @@
 },
 {
   "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.p6spy.engine.logging.P6LogFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.p6spy.engine.logging.P6LogOptions",
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"cacheMBeanInfo","parameterTypes":["javax.management.MBeanInfo"] }, {"name":"getCachedMBeanInfo","parameterTypes":[] }, {"name":"getMBeanInfo","parameterTypes":[] }]
+},
+{
+  "name":"com.p6spy.engine.logging.P6LogOptionsMBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.p6spy.engine.logging.format.HexEncodedBinaryFormat",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.p6spy.engine.spy.P6SpyDriver"
+},
+{
+  "name":"com.p6spy.engine.spy.P6SpyFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.p6spy.engine.spy.P6SpyOptions",
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"cacheMBeanInfo","parameterTypes":["javax.management.MBeanInfo"] }, {"name":"getCachedMBeanInfo","parameterTypes":[] }, {"name":"getMBeanInfo","parameterTypes":[] }]
+},
+{
+  "name":"com.p6spy.engine.spy.P6SpyOptionsMBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.p6spy.engine.spy.appender.CustomLineFormat",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.p6spy.engine.spy.appender.FileLogger",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.p6spy.engine.spy.appender.SingleLineFormat",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -158,6 +260,46 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"com.sun.management.GarbageCollectorMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.sun.management.GcInfo",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.sun.management.HotSpotDiagnosticMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.sun.management.ThreadMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.sun.management.UnixOperatingSystemMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.sun.management.VMOption",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.sun.management.internal.GarbageCollectorExtImpl",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"com.sun.management.internal.HotSpotDiagnostic",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"com.sun.management.internal.HotSpotThreadImpl",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"com.sun.management.internal.OperatingSystemImpl",
+  "queryAllPublicConstructors":true
+},
+{
   "name":"com.zaxxer.hikari.HikariConfig",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true,
@@ -182,6 +324,9 @@
   "allPublicMethods":true
 },
 {
+  "name":"java.beans.Transient"
+},
+{
   "name":"java.io.File",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }, {"name":"valueOf","parameterTypes":["java.lang.String"] }]
 },
@@ -197,7 +342,16 @@
   "allDeclaredFields":true,
   "allDeclaredMethods":true,
   "allDeclaredConstructors":true,
+  "fields":[{"name":"TYPE"}],
   "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.lang.Byte",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Character",
+  "fields":[{"name":"TYPE"}]
 },
 {
   "name":"java.lang.Class",
@@ -208,24 +362,32 @@
   "allDeclaredMethods":true
 },
 {
+  "name":"java.lang.Deprecated",
+  "queryAllPublicMethods":true
+},
+{
   "name":"java.lang.Double",
+  "fields":[{"name":"TYPE"}],
   "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
 },
 {
   "name":"java.lang.Enum",
+  "allDeclaredFields":true,
   "allDeclaredMethods":true
 },
 {
   "name":"java.lang.Float",
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true
+  "queryAllDeclaredConstructors":true,
+  "fields":[{"name":"TYPE"}]
 },
 {
   "name":"java.lang.Integer",
   "allDeclaredFields":true,
   "allDeclaredMethods":true,
   "allDeclaredConstructors":true,
+  "fields":[{"name":"TYPE"}],
   "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
 },
 {
@@ -237,6 +399,7 @@
   "allDeclaredFields":true,
   "allDeclaredMethods":true,
   "allDeclaredConstructors":true,
+  "fields":[{"name":"TYPE"}],
   "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
 },
 {
@@ -257,8 +420,22 @@
   "name":"java.lang.RuntimePermission"
 },
 {
+  "name":"java.lang.Short",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.StackTraceElement",
+  "queryAllPublicMethods":true
+},
+{
   "name":"java.lang.String",
-  "allPublicMethods":true
+  "allPublicMethods":true,
+  "fields":[{"name":"COMPACT_STRINGS"}, {"name":"TYPE"}, {"name":"coder"}, {"name":"value"}],
+  "methods":[{"name":"<init>","parameterTypes":["byte[]","byte"] }, {"name":"coder","parameterTypes":[] }, {"name":"isASCII","parameterTypes":["byte[]"] }, {"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.StringCoding",
+  "methods":[{"name":"hasNegatives","parameterTypes":["byte[]","int","int"] }]
 },
 {
   "name":"java.lang.Thread",
@@ -268,6 +445,10 @@
   "name":"java.lang.Throwable",
   "queryAllPublicMethods":true,
   "methods":[{"name":"addSuppressed","parameterTypes":["java.lang.Throwable"] }, {"name":"getSuppressed","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Void",
+  "fields":[{"name":"TYPE"}]
 },
 {
   "name":"java.lang.annotation.Retention",
@@ -288,6 +469,69 @@
   "queryAllDeclaredMethods":true
 },
 {
+  "name":"java.lang.invoke.MethodHandles$Lookup",
+  "fields":[{"name":"IMPL_LOOKUP"}],
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Class","java.lang.Class","int"] }]
+},
+{
+  "name":"java.lang.management.BufferPoolMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.ClassLoadingMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.CompilationMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.LockInfo",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.ManagementFactory",
+  "methods":[{"name":"getRuntimeMXBean","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.management.ManagementPermission",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.lang.management.MemoryMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.MemoryManagerMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.MemoryPoolMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.MemoryUsage",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.MonitorInfo",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.management.PlatformLoggingMXBean",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"getLoggerLevel","parameterTypes":["java.lang.String"] }, {"name":"getLoggerNames","parameterTypes":[] }, {"name":"getParentLoggerName","parameterTypes":["java.lang.String"] }, {"name":"setLoggerLevel","parameterTypes":["java.lang.String","java.lang.String"] }]
+},
+{
+  "name":"java.lang.management.RuntimeMXBean",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"getInputArguments","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.management.ThreadInfo",
+  "queryAllPublicMethods":true
+},
+{
   "name":"java.lang.reflect.Executable",
   "methods":[{"name":"getParameters","parameterTypes":[] }]
 },
@@ -302,6 +546,14 @@
 {
   "name":"java.lang.reflect.RecordComponent",
   "methods":[{"name":"getAccessor","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getType","parameterTypes":[] }]
+},
+{
+  "name":"java.math.BigDecimal",
+  "fields":[{"name":"intCompact"}]
+},
+{
+  "name":"java.math.BigInteger",
+  "fields":[{"name":"mag"}]
 },
 {
   "name":"java.net.NetPermission"
@@ -354,8 +606,17 @@
   "name":"java.security.interfaces.RSAPublicKey"
 },
 {
+  "name":"java.sql.Clob"
+},
+{
+  "name":"java.sql.Date"
+},
+{
   "name":"java.sql.SQLException",
   "fields":[{"name":"next"}]
+},
+{
+  "name":"java.sql.Timestamp"
 },
 {
   "name":"java.util.AbstractCollection",
@@ -375,6 +636,15 @@
 {
   "name":"java.util.Collection",
   "allDeclaredMethods":true
+},
+{
+  "name":"java.util.Collections$UnmodifiableCollection"
+},
+{
+  "name":"java.util.Collections$UnmodifiableMap"
+},
+{
+  "name":"java.util.Date"
 },
 {
   "name":"java.util.HashSet",
@@ -404,7 +674,8 @@
   "queryAllDeclaredConstructors":true
 },
 {
-  "name":"java.util.PropertyPermission"
+  "name":"java.util.PropertyPermission",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.String"] }]
 },
 {
   "name":"java.util.RandomAccess",
@@ -437,6 +708,39 @@
   "fields":[{"name":"base"}, {"name":"cellsBusy"}]
 },
 {
+  "name":"java.util.logging.LogManager",
+  "methods":[{"name":"getLoggingMXBean","parameterTypes":[] }]
+},
+{
+  "name":"java.util.logging.LoggingMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"javax.management.MBeanOperationInfo",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"getSignature","parameterTypes":[] }]
+},
+{
+  "name":"javax.management.MBeanServerBuilder",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"javax.management.ObjectName"
+},
+{
+  "name":"javax.management.StandardEmitterMBean",
+  "methods":[{"name":"cacheMBeanInfo","parameterTypes":["javax.management.MBeanInfo"] }, {"name":"getCachedMBeanInfo","parameterTypes":[] }, {"name":"getMBeanInfo","parameterTypes":[] }]
+},
+{
+  "name":"javax.management.openmbean.CompositeData"
+},
+{
+  "name":"javax.management.openmbean.OpenMBeanOperationInfoSupport"
+},
+{
+  "name":"javax.management.openmbean.TabularData"
+},
+{
   "name":"javax.security.auth.x500.X500Principal",
   "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
 },
@@ -444,7 +748,38 @@
   "name":"javax.smartcardio.CardPermission"
 },
 {
+  "name":"javax.sql.DataSource"
+},
+{
+  "name":"javax.sql.RowSet"
+},
+{
   "name":"jdk.internal.misc.Unsafe"
+},
+{
+  "name":"jdk.management.jfr.ConfigurationInfo",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"jdk.management.jfr.EventTypeInfo",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"jdk.management.jfr.FlightRecorderMXBean",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"jdk.management.jfr.FlightRecorderMXBeanImpl",
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"cacheMBeanInfo","parameterTypes":["javax.management.MBeanInfo"] }, {"name":"getCachedMBeanInfo","parameterTypes":[] }, {"name":"getMBeanInfo","parameterTypes":[] }, {"name":"getNotificationInfo","parameterTypes":[] }]
+},
+{
+  "name":"jdk.management.jfr.RecordingInfo",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"jdk.management.jfr.SettingDescriptorInfo",
+  "queryAllPublicMethods":true
 },
 {
   "name":"kotlin.Any"
@@ -541,6 +876,9 @@
 {
   "name":"kotlin.jvm.internal.markers.KMappedMarker",
   "queryAllDeclaredMethods":true
+},
+{
+  "name":"kotlin.reflect.jvm.ReflectJvmMapping"
 },
 {
   "name":"kotlin.reflect.jvm.internal.ReflectionFactoryImpl",
@@ -1838,7 +2176,16 @@
   "name":"org.signal.libsignal.protocol.IdentityKey"
 },
 {
-  "name":"org.signal.libsignal.protocol.ServiceId"
+  "name":"org.signal.libsignal.protocol.ServiceId",
+  "allDeclaredFields":true,
+  "allDeclaredClasses":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.signal.libsignal.protocol.ServiceId$Aci",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
 },
 {
   "name":"org.signal.libsignal.protocol.SignalProtocolAddress"
@@ -2125,6 +2472,59 @@
   "name":"org.whispersystems.signalservice.api.groupsv2.TemporalCredential[]"
 },
 {
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceAttachment"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$GiftBadge"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$GroupCallUpdate"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Mention"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Payment"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Quote",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Quote$QuotedAttachment"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Quote$Type",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Reaction"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$RemoteDelete"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$Sticker"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceDataMessage$StoryContext"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServiceGroupContext"
+},
+{
+  "name":"org.whispersystems.signalservice.api.messages.SignalServicePreview"
+},
+{
   "name":"org.whispersystems.signalservice.api.messages.calls.HangupMessage",
   "allDeclaredFields":true,
   "allDeclaredMethods":true,
@@ -2160,6 +2560,9 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"org.whispersystems.signalservice.api.messages.shared.SharedContact"
+},
+{
   "name":"org.whispersystems.signalservice.api.profiles.SignalServiceProfile",
   "allDeclaredFields":true,
   "allDeclaredMethods":true,
@@ -2190,11 +2593,15 @@
   "name":"org.whispersystems.signalservice.api.push.ServiceId",
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
   "queryAllDeclaredConstructors":true,
   "methods":[{"name":"<init>","parameterTypes":["org.signal.libsignal.protocol.ServiceId"] }]
 },
 {
-  "name":"org.whispersystems.signalservice.api.push.ServiceId$ACI"
+  "name":"org.whispersystems.signalservice.api.push.ServiceId$ACI",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
 },
 {
   "name":"org.whispersystems.signalservice.api.push.ServiceId$Companion",
@@ -2349,6 +2756,9 @@
   "allDeclaredMethods":true,
   "allDeclaredConstructors":true,
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.whispersystems.signalservice.internal.push.BodyRange"
 },
 {
   "name":"org.whispersystems.signalservice.internal.push.CdsiAuthResponse",
@@ -2787,6 +3197,38 @@
 {
   "name":"org.whispersystems.signalservice.internal.websocket.WebSocketProtos$WebSocketResponseMessage",
   "fields":[{"name":"bitField0_"}, {"name":"body_"}, {"name":"headers_"}, {"name":"id_"}, {"name":"message_"}, {"name":"status_"}]
+},
+{
+  "name":"sun.management.ClassLoadingImpl",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"sun.management.CompilationImpl",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"sun.management.ManagementFactoryHelper$1",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"sun.management.ManagementFactoryHelper$PlatformLoggingImpl",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"sun.management.MemoryImpl",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"sun.management.MemoryManagerImpl",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"sun.management.MemoryPoolImpl",
+  "queryAllPublicConstructors":true
+},
+{
+  "name":"sun.management.RuntimeImpl",
+  "queryAllPublicConstructors":true
 },
 {
   "name":"sun.misc.Unsafe",
