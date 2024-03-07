@@ -1,7 +1,6 @@
 package org.asamk.signal.dbus;
 
 import org.asamk.Signal;
-import org.asamk.signal.DbusConfig;
 import org.asamk.signal.manager.Manager;
 import org.asamk.signal.manager.api.AlreadyReceivingException;
 import org.asamk.signal.manager.api.AttachmentInvalidException;
@@ -39,6 +38,7 @@ import org.asamk.signal.manager.api.RecipientIdentifier;
 import org.asamk.signal.manager.api.SendGroupMessageResults;
 import org.asamk.signal.manager.api.SendMessageResults;
 import org.asamk.signal.manager.api.StickerPack;
+import org.asamk.signal.manager.api.StickerPackId;
 import org.asamk.signal.manager.api.StickerPackInvalidException;
 import org.asamk.signal.manager.api.StickerPackUrl;
 import org.asamk.signal.manager.api.TypingAction;
@@ -90,14 +90,16 @@ public class DbusManagerImpl implements Manager {
     private final Set<ReceiveMessageHandler> weakHandlers = new HashSet<>();
     private final Set<ReceiveMessageHandler> messageHandlers = new HashSet<>();
     private final List<Runnable> closedListeners = new ArrayList<>();
+    private final String busname;
     private DBusSigHandler<Signal.MessageReceivedV2> dbusMsgHandler;
     private DBusSigHandler<Signal.EditMessageReceived> dbusEditMsgHandler;
     private DBusSigHandler<Signal.ReceiptReceivedV2> dbusRcptHandler;
     private DBusSigHandler<Signal.SyncMessageReceivedV2> dbusSyncHandler;
 
-    public DbusManagerImpl(final Signal signal, DBusConnection connection) {
+    public DbusManagerImpl(final Signal signal, DBusConnection connection, final String busname) {
         this.signal = signal;
         this.connection = connection;
+        this.busname = busname;
     }
 
     @Override
@@ -122,11 +124,16 @@ public class DbusManagerImpl implements Manager {
 
     @Override
     public void updateAccountAttributes(
-            final String deviceName, final Boolean unrestrictedUnidentifiedSender
+            final String deviceName,
+            final Boolean unrestrictedUnidentifiedSender,
+            final Boolean discoverableByNumber,
+            final Boolean numberSharing
     ) throws IOException {
         if (deviceName != null) {
             final var devicePath = signal.getThisDevice();
             getRemoteObject(devicePath, Signal.Device.class).Set("org.asamk.Signal.Device", "Name", deviceName);
+        } else {
+            throw new UnsupportedOperationException();
         }
     }
 
@@ -463,6 +470,14 @@ public class DbusManagerImpl implements Manager {
     public SendMessageResults sendEndSessionMessage(final Set<RecipientIdentifier.Single> recipients) throws IOException {
         signal.sendEndSessionMessage(recipients.stream().map(RecipientIdentifier.Single::getIdentifier).toList());
         return new SendMessageResults(0, Map.of());
+    }
+
+    @Override
+    public SendMessageResults sendMessageRequestResponse(
+            final MessageEnvelope.Sync.MessageRequestResponse.Type type,
+            final Set<RecipientIdentifier> recipientIdentifiers
+    ) {
+        throw new UnsupportedOperationException();
     }
 
     public void hideRecipient(final RecipientIdentifier.Single recipient) {
@@ -820,7 +835,7 @@ public class DbusManagerImpl implements Manager {
 
     private <T extends DBusInterface> T getRemoteObject(final DBusPath path, final Class<T> type) {
         try {
-            return connection.getRemoteObject(DbusConfig.getBusname(), path.getPath(), type);
+            return connection.getRemoteObject(busname, path.getPath(), type);
         } catch (DBusException e) {
             throw new AssertionError(e);
         }
@@ -1065,6 +1080,26 @@ public class DbusManagerImpl implements Manager {
 
     @Override
     public InputStream retrieveAttachment(final String id) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public InputStream retrieveContactAvatar(final RecipientIdentifier.Single recipient) throws IOException, UnregisteredRecipientException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public InputStream retrieveProfileAvatar(final RecipientIdentifier.Single recipient) throws IOException, UnregisteredRecipientException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public InputStream retrieveGroupAvatar(final GroupId groupId) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public InputStream retrieveSticker(final StickerPackId stickerPackId, final int stickerId) throws IOException {
         throw new UnsupportedOperationException();
     }
 

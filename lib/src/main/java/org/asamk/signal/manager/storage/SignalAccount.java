@@ -102,6 +102,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -113,7 +114,7 @@ public class SignalAccount implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(SignalAccount.class);
 
     private static final int MINIMUM_STORAGE_VERSION = 1;
-    private static final int CURRENT_STORAGE_VERSION = 8;
+    private static final int CURRENT_STORAGE_VERSION = 9;
 
     private final Object LOCK = new Object();
 
@@ -148,6 +149,9 @@ public class SignalAccount implements Closeable {
     private final KeyValueEntry<Long> lastReceiveTimestamp = new KeyValueEntry<>("last-receive-timestamp",
             long.class,
             0L);
+    private final KeyValueEntry<Boolean> needsToRetryFailedMessages = new KeyValueEntry<>("retry-failed-messages",
+            Boolean.class,
+            true);
     private final KeyValueEntry<byte[]> cdsiToken = new KeyValueEntry<>("cdsi-token", byte[].class);
     private final KeyValueEntry<Long> lastRecipientsRefresh = new KeyValueEntry<>("last-recipients-refresh",
             long.class);
@@ -296,7 +300,7 @@ public class SignalAccount implements Closeable {
         this.pniAccountData.setIdentityKeyPair(pniIdentity);
         this.registered = false;
         this.isMultiDevice = true;
-        getKeyValueStore().storeEntry(lastReceiveTimestamp, 0L);
+        setLastReceiveTimestamp(0L);
         this.pinMasterKey = masterKey;
         getKeyValueStore().storeEntry(storageManifestVersion, -1L);
         this.setStorageManifest(null);
@@ -341,7 +345,7 @@ public class SignalAccount implements Closeable {
         this.pniAccountData.setServiceId(pni);
         init();
         this.registrationLockPin = pin;
-        getKeyValueStore().storeEntry(lastReceiveTimestamp, 0L);
+        setLastReceiveTimestamp(0L);
         save();
 
         setPreKeys(ServiceIdType.ACI, aciPreKeys);
@@ -499,7 +503,10 @@ public class SignalAccount implements Closeable {
                             e);
                 }
             }
-
+            if (storage.usernameLinkEntropy != null && storage.usernameLinkServerId != null) {
+                usernameLink = new UsernameLinkComponents(base64.decode(storage.usernameLinkEntropy),
+                        UUID.fromString(storage.usernameLinkServerId));
+            }
         }
 
         if (migratedLegacyConfig) {
@@ -586,7 +593,7 @@ public class SignalAccount implements Closeable {
             isMultiDevice = rootNode.get("isMultiDevice").asBoolean();
         }
         if (rootNode.hasNonNull("lastReceiveTimestamp")) {
-            getKeyValueStore().storeEntry(lastReceiveTimestamp, rootNode.get("lastReceiveTimestamp").asLong());
+            setLastReceiveTimestamp(rootNode.get("lastReceiveTimestamp").asLong());
         }
         int registrationId = 0;
         if (rootNode.hasNonNull("registrationId")) {
@@ -964,7 +971,9 @@ public class SignalAccount implements Closeable {
                     registrationLockPin,
                     pinMasterKey == null ? null : base64.encodeToString(pinMasterKey.serialize()),
                     storageKey == null ? null : base64.encodeToString(storageKey.serialize()),
-                    profileKey == null ? null : base64.encodeToString(profileKey.serialize()));
+                    profileKey == null ? null : base64.encodeToString(profileKey.serialize()),
+                    usernameLink == null ? null : base64.encodeToString(usernameLink.getEntropy()),
+                    usernameLink == null ? null : usernameLink.getServerId().toString());
             try {
                 try (var output = new ByteArrayOutputStream()) {
                     // Write to memory first to prevent corrupting the file in case of serialization errors
@@ -1105,7 +1114,7 @@ public class SignalAccount implements Closeable {
                 serviceIdType,
                 preKeyMetadata.nextKyberPreKeyId);
         accountData.getSignalServiceAccountDataStore()
-                .markAllOneTimeEcPreKeysStaleIfNecessary(System.currentTimeMillis());
+                .markAllOneTimeKyberPreKeysStaleIfNecessary(System.currentTimeMillis());
         for (var record : records) {
             if (preKeyMetadata.nextKyberPreKeyId != record.getId()) {
                 logger.error("Invalid kyber pre key id {}, expected {}",
@@ -1351,7 +1360,7 @@ public class SignalAccount implements Closeable {
                 getAccountCapabilities(),
                 encryptedDeviceName,
                 pniAccountData.getLocalRegistrationId(),
-                null); // TODO recoveryPassword?
+                getRecoveryPassword());
     }
 
     public AccountAttributes.Capabilities getAccountCapabilities() {
@@ -1533,6 +1542,14 @@ public class SignalAccount implements Closeable {
         save();
     }
 
+    public String getRecoveryPassword() {
+        final var masterKey = getPinBackedMasterKey();
+        if (masterKey == null) {
+            return null;
+        }
+        return masterKey.deriveRegistrationRecoveryPassword();
+    }
+
     public long getStorageManifestVersion() {
         return getKeyValueStore().getEntry(storageManifestVersion);
     }
@@ -1634,6 +1651,14 @@ public class SignalAccount implements Closeable {
 
     public void setLastReceiveTimestamp(final long value) {
         getKeyValueStore().storeEntry(lastReceiveTimestamp, value);
+    }
+
+    public void setNeedsToRetryFailedMessages(final boolean value) {
+        getKeyValueStore().storeEntry(needsToRetryFailedMessages, value);
+    }
+
+    public boolean getNeedsToRetryFailedMessages() {
+        return getKeyValueStore().getEntry(needsToRetryFailedMessages);
     }
 
     public boolean isUnrestrictedUnidentifiedAccess() {
@@ -1845,7 +1870,9 @@ public class SignalAccount implements Closeable {
             String registrationLockPin,
             String pinMasterKey,
             String storageKey,
-            String profileKey
+            String profileKey,
+            String usernameLinkEntropy,
+            String usernameLinkServerId
     ) {
 
         public record AccountData(

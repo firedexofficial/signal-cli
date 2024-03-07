@@ -3,10 +3,10 @@ plugins {
     application
     eclipse
     `check-lib-versions`
-    id("org.graalvm.buildtools.native") version "0.10.0"
+    id("org.graalvm.buildtools.native") version "0.10.1"
 }
 
-version = "0.12.8-SNAPSHOT"
+version = "0.13.2-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21

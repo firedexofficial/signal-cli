@@ -45,7 +45,24 @@ pub trait Rpc {
         account: Option<String>,
         id: String,
         recipient: Option<String>,
-        group_id: Option<String>,
+        #[allow(non_snake_case)] groupId: Option<String>,
+    ) -> Result<Value, ErrorObjectOwned>;
+
+    #[method(name = "getAvatar", param_kind = map)]
+    fn get_avatar(
+        &self,
+        account: Option<String>,
+        contact: Option<String>,
+        profile: Option<String>,
+        #[allow(non_snake_case)] groupId: Option<String>,
+    ) -> Result<Value, ErrorObjectOwned>;
+
+    #[method(name = "getSticker", param_kind = map)]
+    fn get_sticker(
+        &self,
+        account: Option<String>,
+        #[allow(non_snake_case)] packId: String,
+        #[allow(non_snake_case)] stickerId: u32,
     ) -> Result<Value, ErrorObjectOwned>;
 
     #[method(name = "getUserStatus", param_kind = map)]
@@ -230,6 +247,15 @@ pub trait Rpc {
         stop: bool,
     ) -> Result<Value, ErrorObjectOwned>;
 
+    #[method(name = "sendMessageRequestResponse", param_kind = map)]
+    fn send_message_request_response(
+        &self,
+        account: Option<String>,
+        recipients: Vec<String>,
+        #[allow(non_snake_case)] groupIds: Vec<String>,
+        r#type: String,
+    ) -> Result<Value, ErrorObjectOwned>;
+
     #[method(name = "setPin", param_kind = map)]
     fn set_pin(&self, account: Option<String>, pin: String) -> Result<Value, ErrorObjectOwned>;
 
@@ -284,6 +310,8 @@ pub trait Rpc {
         account: Option<String>,
         deviceName: Option<String>,
         unrestrictedUnidentifiedSender: Option<bool>,
+        discoverableByNumber: Option<bool>,
+        numberSharing: Option<bool>,
     ) -> Result<Value, ErrorObjectOwned>;
 
     #[method(name = "updateConfiguration", param_kind = map)]

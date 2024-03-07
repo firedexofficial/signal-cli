@@ -71,6 +71,9 @@ Make request via user dbus.
 *--dbus-system*::
 Make request via system dbus.
 
+*--bus-name*::
+Connect to another D-Bus bus name than the default.
+
 *-o* OUTPUT-MODE, *--output* OUTPUT-MODE::
 Specify if you want commands to output in either "plain-text" mode or in "json".
 Defaults to "plain-text"
@@ -99,11 +102,14 @@ If the account was deleted (with --delete-account) it cannot be reactivated.
 The verification should be done over voice, not SMS.
 Voice verification only works if an SMS verification has been attempted before.
 
-*--captcha*::
+*--captcha* CAPTCHA::
 The captcha token, required if registration failed with a captcha required error.
 To get the token, go to https://signalcaptchas.org/registration/generate.html
 For the staging environment, use: https://signalcaptchas.org/staging/registration/generate.html
 After solving the captcha, right-click on the "Open Signal" link and copy the link.
+
+*--reregister*::
+Register even if account is already registered.
 
 === verify
 
@@ -148,8 +154,22 @@ Can fix problems with receiving messages.
 *-n* NAME, *--device-name* NAME::
 Set a new device name for the primary or linked device
 
+*-u* NAME *--username* NAME::
+Specify a username that can then be used to contact this account.
+This can either be just the nickname (e.g. test) or the complete username with discriminator (e.g. test.000).
+Returns the new username with discriminator and the username link.
+
+*--delete-username*::
+Delete the username associated with this account.
+
 *--unrestricted-unidentified-sender* {true,false}::
 Enable if anyone should be able to send you unidentified sender messages.
+
+*--discoverable-by-number* {true,false}::
+Enable/disable if the account should be discoverable by phone number
+
+*--number-sharing* {true,false}::
+Indicates if Signal should share its phone number when sending a message.
 
 === startChangeNumber
 
@@ -266,6 +286,9 @@ Send the message to self without notification.
 *-g* GROUP, *--group-id* GROUP::
 Specify the recipient group ID in base64 encoding.
 
+*-u* USERNAME, *--username* USERNAME::
+Specify the recipient username or username link.
+
 *-m* MESSAGE, *--message* MESSAGE::
 Specify the message.
 
@@ -337,6 +360,22 @@ Clear session state and send end session message.
 *--edit-timestamp*::
 Specify the timestamp of a previous message with the recipient or group to send an edited message.
 
+=== sendMessageRequestResponse
+
+Send response to a message request to linked devices.
+
+RECIPIENT::
+Specify the recipients’ phone number.
+
+*-g* GROUP, *--group-id* GROUP::
+Specify the recipient group ID in base64 encoding.
+
+*-u* USERNAME, *--username* USERNAME::
+Specify the recipient username or username link.
+
+*--type* TYPE::
+Type of message request response (accept, delete)
+
 === sendPaymentNotification
 
 Send a payment notification.
@@ -359,6 +398,9 @@ Specify the recipients’ phone number.
 
 *-g* GROUP, *--group-id* GROUP::
 Specify the recipient group ID in base64 encoding.
+
+*-u* USERNAME, *--username* USERNAME::
+Specify the recipient username or username link.
 
 *-e* EMOJI, *--emoji* EMOJI::
 Specify the emoji, should be a single unicode grapheme cluster.
@@ -411,6 +453,9 @@ Specify the recipients’ phone number.
 
 *-g* GROUP, *--group-id* GROUP::
 Specify the recipient group ID in base64 encoding.
+
+*-u* USERNAME, *--username* USERNAME::
+Specify the recipient username or username link.
 
 *-t* TIMESTAMP, *--target-timestamp* TIMESTAMP::
 Specify the timestamp of the message to delete.
@@ -719,6 +764,31 @@ Referred to generally as recipient.
 *-g* [GROUP], *--group-id* [GROUP]::
 Alternatively, specify the group IDs for which to get the attachment.
 
+=== getAvatar
+
+Gets the raw data for a specified contact, contact's profile or group avatar.
+The attachment data is returned as a Base64 String.
+
+*--contact* [RECIPIENT]::
+Specify the number of a recipient.
+
+*--profile* [RECIPIENT]::
+Specify the number of a recipient.
+
+*-g* [GROUP], *--group-id* [GROUP]::
+Alternatively, specify the group ID for which to get the avatar.
+
+=== getSticker
+
+Gets the raw data for a specified sticker.
+The attachment data is returned as a Base64 String.
+
+*--pack-id* [PACK_ID]::
+Specify the id of a sticker pack (hex encoded).
+
+*--sticker-id* [STICKER_ID]::
+Specify the index of a sticker in the sticker pack.
+
 === daemon
 
 signal-cli can run in daemon mode and provides JSON-RPC or an experimental dbus interface.
@@ -745,6 +815,9 @@ See **signal-cli-dbus**(5) for info on the dbus interface.
 *--dbus-system*::
 Export DBus interface on system bus. +
 See **signal-cli-dbus**(5) for info on the dbus interface.
+
+*--bus-name*::
+Claim another D-Bus bus name than the default.
 
 *--ignore-attachments*::
 Don’t download attachments of received messages.

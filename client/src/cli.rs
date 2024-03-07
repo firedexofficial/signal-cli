@@ -68,6 +68,20 @@ pub enum CliCommands {
         #[arg(short = 'g', long = "group-id")]
         group_id: Option<String>,
     },
+    GetAvatar {
+        #[arg(long)]
+        contact: Option<String>,
+        #[arg(long)]
+        profile: Option<String>,
+        #[arg(short = 'g', long = "group-id")]
+        group_id: Option<String>,
+    },
+    GetSticker {
+        #[arg(long = "pack-id")]
+        pack_id: String,
+        #[arg(long = "sticker-id")]
+        sticker_id: u32,
+    },
     GetUserStatus {
         recipient: Vec<String>,
     },
@@ -263,6 +277,14 @@ pub enum CliCommands {
         #[arg(short = 's', long)]
         stop: bool,
     },
+    SendMessageRequestResponse {
+        recipient: Vec<String>,
+
+        #[arg(short = 'g', long = "group-id")]
+        group_id: Vec<String>,
+
+        r#type: MessageRequestResponseType,
+    },
     SetPin {
         pin: String,
     },
@@ -302,6 +324,10 @@ pub enum CliCommands {
         device_name: Option<String>,
         #[arg(long = "unrestricted-unidentified-sender")]
         unrestricted_unidentified_sender: Option<bool>,
+        #[arg(long = "discoverable-by-number")]
+        discoverable_by_number: Option<bool>,
+        #[arg(long = "number-sharing")]
+        number_sharing: Option<bool>,
     },
     UpdateConfiguration {
         #[arg(long = "read-receipts")]
@@ -428,4 +454,11 @@ pub enum LinkState {
 pub enum GroupPermission {
     EveryMember,
     OnlyAdmins,
+}
+
+#[derive(ValueEnum, Clone, Debug)]
+#[value(rename_all = "kebab-case")]
+pub enum MessageRequestResponseType {
+    Accept,
+    Delete,
 }

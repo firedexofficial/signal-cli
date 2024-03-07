@@ -90,7 +90,7 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
         final var phoneNumberSharingMode = remote.getPhoneNumberSharingMode();
         final var preferContactAvatars = remote.isPreferContactAvatars();
         final var universalExpireTimer = remote.getUniversalExpireTimer();
-        final var e164 = local.getE164();
+        final var e164 = account.isPrimaryDevice() ? local.getE164() : remote.getE164();
         final var defaultReactions = !remote.getDefaultReactions().isEmpty()
                 ? remote.getDefaultReactions()
                 : local.getDefaultReactions();
@@ -102,10 +102,10 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
         final var storiesDisabled = remote.isStoriesDisabled();
         final var hasSeenGroupStoryEducation = remote.hasSeenGroupStoryEducationSheet()
                 || local.hasSeenGroupStoryEducationSheet();
-        final var username = remote.getUsername() != null && !remote.getUsername().isEmpty()
-                ? remote.getUsername()
-                : local.getUsername();
-        final var usernameLink = remote.getUsernameLink() != null ? remote.getUsernameLink() : local.getUsernameLink();
+        boolean hasSeenUsernameOnboarding = remote.hasCompletedUsernameOnboarding()
+                || local.hasCompletedUsernameOnboarding();
+        final var username = remote.getUsername();
+        final var usernameLink = remote.getUsernameLink();
 
         final var mergedBuilder = new SignalAccountRecord.Builder(remote.getId().getRaw(), unknownFields).setGivenName(
                         givenName)
@@ -120,7 +120,6 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
                 .setLinkPreviewsEnabled(linkPreviews)
                 .setUnlistedPhoneNumber(unlisted)
                 .setPhoneNumberSharingMode(phoneNumberSharingMode)
-                .setUnlistedPhoneNumber(unlisted)
                 .setPinnedConversations(pinnedConversations)
                 .setPreferContactAvatars(preferContactAvatars)
                 .setPayments(payments.isEnabled(), payments.getEntropy().orElse(null))
@@ -134,6 +133,7 @@ public class AccountRecordProcessor extends DefaultStorageRecordProcessor<Signal
                 .setHasViewedOnboardingStory(hasViewedOnboardingStory)
                 .setStoriesDisabled(storiesDisabled)
                 .setHasSeenGroupStoryEducationSheet(hasSeenGroupStoryEducation)
+                .setHasCompletedUsernameOnboarding(hasSeenUsernameOnboarding)
                 .setStoryViewReceiptsState(storyViewReceiptsState)
                 .setUsername(username)
                 .setUsernameLink(usernameLink)

@@ -2,6 +2,7 @@ package org.asamk.signal.manager;
 
 import org.asamk.signal.manager.api.AlreadyReceivingException;
 import org.asamk.signal.manager.api.AttachmentInvalidException;
+import org.asamk.signal.manager.api.CaptchaRejectedException;
 import org.asamk.signal.manager.api.CaptchaRequiredException;
 import org.asamk.signal.manager.api.Configuration;
 import org.asamk.signal.manager.api.Device;
@@ -34,6 +35,7 @@ import org.asamk.signal.manager.api.RecipientIdentifier;
 import org.asamk.signal.manager.api.SendGroupMessageResults;
 import org.asamk.signal.manager.api.SendMessageResults;
 import org.asamk.signal.manager.api.StickerPack;
+import org.asamk.signal.manager.api.StickerPackId;
 import org.asamk.signal.manager.api.StickerPackInvalidException;
 import org.asamk.signal.manager.api.StickerPackUrl;
 import org.asamk.signal.manager.api.TypingAction;
@@ -42,6 +44,7 @@ import org.asamk.signal.manager.api.UpdateGroup;
 import org.asamk.signal.manager.api.UpdateProfile;
 import org.asamk.signal.manager.api.UserStatus;
 import org.asamk.signal.manager.api.UsernameLinkUrl;
+import org.asamk.signal.manager.api.VerificationMethodNotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whispersystems.signalservice.api.util.PhoneNumberFormatter;
@@ -89,7 +92,12 @@ public interface Manager extends Closeable {
      */
     Map<String, UserStatus> getUserStatus(Set<String> numbers) throws IOException, RateLimitException;
 
-    void updateAccountAttributes(String deviceName, Boolean unrestrictedUnidentifiedSender) throws IOException;
+    void updateAccountAttributes(
+            String deviceName,
+            Boolean unrestrictedUnidentifiedSender,
+            final Boolean discoverableByNumber,
+            final Boolean numberSharing
+    ) throws IOException;
 
     Configuration getConfiguration();
 
@@ -119,7 +127,7 @@ public interface Manager extends Closeable {
 
     void startChangeNumber(
             String newNumber, boolean voiceVerification, String captcha
-    ) throws RateLimitException, IOException, CaptchaRequiredException, NonNormalizedPhoneNumberException, NotPrimaryDeviceException;
+    ) throws RateLimitException, IOException, CaptchaRequiredException, NonNormalizedPhoneNumberException, NotPrimaryDeviceException, VerificationMethodNotAvailableException;
 
     void finishChangeNumber(
             String newNumber, String verificationCode, String pin
@@ -129,11 +137,13 @@ public interface Manager extends Closeable {
 
     void deleteAccount() throws IOException;
 
-    void submitRateLimitRecaptchaChallenge(String challenge, String captcha) throws IOException;
+    void submitRateLimitRecaptchaChallenge(
+            String challenge, String captcha
+    ) throws IOException, CaptchaRejectedException;
 
     List<Device> getLinkedDevices() throws IOException;
 
-    void removeLinkedDevices(int deviceId) throws IOException;
+    void removeLinkedDevices(int deviceId) throws IOException, NotPrimaryDeviceException;
 
     void addDeviceLink(DeviceLinkUrl linkUri) throws IOException, InvalidDeviceLinkException, NotPrimaryDeviceException;
 
@@ -197,6 +207,10 @@ public interface Manager extends Closeable {
     ) throws IOException;
 
     SendMessageResults sendEndSessionMessage(Set<RecipientIdentifier.Single> recipients) throws IOException;
+
+    SendMessageResults sendMessageRequestResponse(
+            MessageEnvelope.Sync.MessageRequestResponse.Type type, Set<RecipientIdentifier> recipientIdentifiers
+    );
 
     void hideRecipient(RecipientIdentifier.Single recipient);
 
@@ -306,6 +320,14 @@ public interface Manager extends Closeable {
     void addClosedListener(Runnable listener);
 
     InputStream retrieveAttachment(final String id) throws IOException;
+
+    InputStream retrieveContactAvatar(final RecipientIdentifier.Single recipient) throws IOException, UnregisteredRecipientException;
+
+    InputStream retrieveProfileAvatar(final RecipientIdentifier.Single recipient) throws IOException, UnregisteredRecipientException;
+
+    InputStream retrieveGroupAvatar(final GroupId groupId) throws IOException;
+
+    InputStream retrieveSticker(final StickerPackId stickerPackId, final int stickerId) throws IOException;
 
     @Override
     void close();

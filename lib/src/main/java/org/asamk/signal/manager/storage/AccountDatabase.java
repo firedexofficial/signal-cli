@@ -33,7 +33,7 @@ import java.util.UUID;
 public class AccountDatabase extends Database {
 
     private static final Logger logger = LoggerFactory.getLogger(AccountDatabase.class);
-    private static final long DATABASE_VERSION = 23;
+    private static final long DATABASE_VERSION = 24;
 
     private AccountDatabase(final HikariDataSource dataSource) {
         super(logger, DATABASE_VERSION, dataSource);
@@ -495,7 +495,7 @@ public class AccountDatabase extends Database {
                                         CREATE TABLE storage_id (
                                           _id INTEGER PRIMARY KEY,
                                           type INTEGER NOT NULL,
-                                          storage_id BLOB NOT NULL
+                                          storage_id BLOB UNIQUE NOT NULL
                                         ) STRICT;
                                         ALTER TABLE group_v1 ADD COLUMN storage_id BLOB;
                                         ALTER TABLE group_v1 ADD COLUMN storage_record BLOB;
@@ -556,7 +556,7 @@ public class AccountDatabase extends Database {
                                           profile_capabilities TEXT
                                         ) STRICT;
                                         INSERT INTO recipient2 (_id, aci, pni, storage_id, storage_record, number, username, unregistered_timestamp, profile_key, profile_key_credential, given_name, family_name, color, expiration_time, blocked, archived, profile_sharing, hidden, profile_last_update_timestamp, profile_given_name, profile_family_name, profile_about, profile_about_emoji, profile_avatar_url_path, profile_mobile_coin_address, profile_unidentified_access_mode, profile_capabilities)
-                                          SELECT r._id, (SELECT t.address FROM tmp_mapping_table t WHERE t.uuid = r.uuid AND t.address not like 'PNI:%') aci, (SELECT t.address FROM tmp_mapping_table t WHERE t.uuid = r.pni AND t.address like 'PNI:%') pni, storage_id, storage_record, number, username, unregistered_timestamp, profile_key, profile_key_credential, given_name, family_name, color, expiration_time, blocked, archived, profile_sharing, hidden, profile_last_update_timestamp, profile_given_name, profile_family_name, profile_about, profile_about_emoji, profile_avatar_url_path, profile_mobile_coin_address, profile_unidentified_access_mode, profile_capabilities
+                                          SELECT r._id, (SELECT t.address FROM tmp_mapping_table t WHERE t.uuid = r.uuid AND t.address not like 'PNI:%') aci, (SELECT t.address FROM tmp_mapping_table t WHERE t.uuid = r.pni AND t.address like 'PNI:%' AND (SELECT COUNT(pni) FROM recipient WHERE pni = r.pni) = 1) pni, storage_id, storage_record, number, username, unregistered_timestamp, profile_key, profile_key_credential, given_name, family_name, color, expiration_time, blocked, archived, profile_sharing, hidden, profile_last_update_timestamp, profile_given_name, profile_family_name, profile_about, profile_about_emoji, profile_avatar_url_path, profile_mobile_coin_address, profile_unidentified_access_mode, profile_capabilities
                                           FROM recipient r;
                                         DROP TABLE recipient;
                                         ALTER TABLE recipient2 RENAME TO recipient;
@@ -570,6 +570,14 @@ public class AccountDatabase extends Database {
             try (final var statement = connection.createStatement()) {
                 statement.executeUpdate("""
                                         ALTER TABLE group_v2 ADD profile_sharing INTEGER NOT NULL DEFAULT TRUE;
+                                        """);
+            }
+        }
+        if (oldVersion < 24) {
+            logger.debug("Updating database: Create needs_pni_signature column");
+            try (final var statement = connection.createStatement()) {
+                statement.executeUpdate("""
+                                        ALTER TABLE recipient ADD needs_pni_signature INTEGER NOT NULL DEFAULT FALSE;
                                         """);
             }
         }

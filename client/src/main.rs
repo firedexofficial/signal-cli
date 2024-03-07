@@ -275,9 +275,17 @@ async fn handle_command(
         CliCommands::UpdateAccount {
             device_name,
             unrestricted_unidentified_sender,
+            discoverable_by_number,
+            number_sharing,
         } => {
             client
-                .update_account(cli.account, device_name, unrestricted_unidentified_sender)
+                .update_account(
+                    cli.account,
+                    device_name,
+                    unrestricted_unidentified_sender,
+                    discoverable_by_number,
+                    number_sharing,
+                )
                 .await
         }
         CliCommands::UpdateConfiguration {
@@ -407,6 +415,19 @@ async fn handle_command(
                 .get_attachment(cli.account, id, recipient, group_id)
                 .await
         }
+        CliCommands::GetAvatar {
+            contact,
+            profile,
+            group_id,
+        } => {
+            client
+                .get_avatar(cli.account, contact, profile, group_id)
+                .await
+        }
+        CliCommands::GetSticker {
+            pack_id,
+            sticker_id,
+        } => client.get_sticker(cli.account, pack_id, sticker_id).await,
         CliCommands::StartChangeNumber {
             number,
             voice,
@@ -414,6 +435,23 @@ async fn handle_command(
         } => {
             client
                 .start_change_number(cli.account, number, voice, captcha)
+                .await
+        }
+        CliCommands::SendMessageRequestResponse {
+            recipient,
+            group_id,
+            r#type,
+        } => {
+            client
+                .send_message_request_response(
+                    cli.account,
+                    recipient,
+                    group_id,
+                    match r#type {
+                        cli::MessageRequestResponseType::Accept => "accept".to_owned(),
+                        cli::MessageRequestResponseType::Delete => "delete".to_owned(),
+                    },
+                )
                 .await
         }
     }

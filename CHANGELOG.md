@@ -2,23 +2,64 @@
 
 ## [Unreleased]
 
+## [0.13.1] - 2024-02-27
+
+### Added
+
+- Add `--reregister` parameter to force registration of an already registered account
+
+### Fixed
+
+- Fixed rare issue with duplicate PNIs during migration
+
+### Improved
+
+- Show information when requesting voice verification without prior SMS verification
+- Username can now be set with an explicit discriminator (e.g. testname.000)
+- Improve behavior when PNI prekeys upload fails
+- Improve `submitRateLimitChallenge` error message if captcha is rejected by server
+- Only retry messages after an identity was trusted
+
+### Changed
+
+- Default number sharing to NOBODY, to match the official apps behavior.
+
+## [0.13.0] - 2024-02-18
+
 **Attention**: Now requires Java 21 and libsignal-client version 0.39.2
+
+### Breaking changes
+
+- Sending to the self number (+XXXX) now behaves the same as the `--note-to-self` parameter. To get the previous
+  behavior with notification, the `--notify-self` parameter can be added.
 
 ### Added
 
 - New `--hidden` parameter for `removeContact` command
 - New `--notify-self` parameter for `send` command, for sending a non-sync message when self is part of the recipients
   or groups.
+- New `--unrestricted-unidentified-sender`, `--discoverable-by-number`, `--number-sharing`, `--username`
+  and `--delete-username` parameter for `updateAccount` command
+- New `--bus-name` parameter for `daemon` command to use another D-Bus bus name
+- New `getAvatar` and `getSticker` commands to get avatar and sticker images
+- New `sendMessageRequestResponse` command to accept/delete message requests
 
-  Sending to the self number (+XXXX) now behaves the same as the `--note-to-self` parameter. To get the previous
-  behavior, the `--notify-self` parameter can be added
-- New `--unrestricted-unidentified-sender` parameter for `updateAccount command`
+### Fixed
+
+- Improve issue with stale prekeys and receiving messages to PNI address
 
 ### Improved
 
 - Better shutdown handling after Ctrl+C and SIGTERM
 - Implemented full remote storage sync.
   Provides better contact and settings sync for linked devices.
+- `listContacts` doesn't list unregistered users anymore
+
+## [0.12.8] - 2024-02-06
+
+### Fixes
+
+- Update user agent
 
 ## [0.12.7] - 2023-12-15
 
@@ -452,7 +493,7 @@
 - Improve exit code for message sending.
   Exit with 0 status code if the message was sent successfully to at least
   one recipient, otherwise exit with status code 2 or 4 (for untrusted).
-- Download profiles in parallel for improved perfomance
+- Download profiles in parallel for improved performance
 - `--verbose` flag can be specified multiple times for additional log output
 - Enable more security options for systemd service file
 - Rename sandbox to staging environment, to match the upstream name.

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.whispersystems.signalservice.api.account.PreKeyUpload;
 import org.whispersystems.signalservice.api.push.ServiceIdType;
 import org.whispersystems.signalservice.api.push.exceptions.AuthorizationFailedException;
+import org.whispersystems.signalservice.api.push.exceptions.NonSuccessfulResponseCodeException;
 import org.whispersystems.signalservice.internal.push.OneTimePreKeyCounts;
 
 import java.io.IOException;
@@ -41,6 +42,11 @@ public class PreKeyHelper {
         refreshPreKeysIfNecessary(ServiceIdType.PNI);
     }
 
+    public void forceRefreshPreKeys() throws IOException {
+        forceRefreshPreKeys(ServiceIdType.ACI);
+        forceRefreshPreKeys(ServiceIdType.PNI);
+    }
+
     public void refreshPreKeysIfNecessary(ServiceIdType serviceIdType) throws IOException {
         final var identityKeyPair = account.getIdentityKeyPair(serviceIdType);
         if (identityKeyPair == null) {
@@ -51,6 +57,30 @@ public class PreKeyHelper {
             return;
         }
 
+        if (refreshPreKeysIfNecessary(serviceIdType, identityKeyPair)) {
+            refreshPreKeysIfNecessary(serviceIdType, identityKeyPair);
+        }
+    }
+
+    public void forceRefreshPreKeys(ServiceIdType serviceIdType) throws IOException {
+        final var identityKeyPair = account.getIdentityKeyPair(serviceIdType);
+        if (identityKeyPair == null) {
+            return;
+        }
+        final var accountId = account.getAccountId(serviceIdType);
+        if (accountId == null) {
+            return;
+        }
+
+        final var counts = new OneTimePreKeyCounts(0, 0);
+        if (refreshPreKeysIfNecessary(serviceIdType, identityKeyPair, counts, true)) {
+            refreshPreKeysIfNecessary(serviceIdType, identityKeyPair, counts, true);
+        }
+    }
+
+    private boolean refreshPreKeysIfNecessary(
+            final ServiceIdType serviceIdType, final IdentityKeyPair identityKeyPair
+    ) throws IOException {
         OneTimePreKeyCounts preKeyCounts;
         try {
             preKeyCounts = dependencies.getAccountManager().getPreKeyCounts(serviceIdType);
@@ -59,65 +89,96 @@ public class PreKeyHelper {
             preKeyCounts = new OneTimePreKeyCounts(0, 0);
         }
 
-        SignedPreKeyRecord signedPreKeyRecord = null;
-        List<PreKeyRecord> preKeyRecords = null;
-        KyberPreKeyRecord lastResortKyberPreKeyRecord = null;
-        List<KyberPreKeyRecord> kyberPreKeyRecords = null;
+        return refreshPreKeysIfNecessary(serviceIdType, identityKeyPair, preKeyCounts, false);
+    }
 
-        try {
-            if (preKeyCounts.getEcCount() < ServiceConfig.PREKEY_MINIMUM_COUNT) {
-                logger.debug("Refreshing {} ec pre keys, because only {} of min {} pre keys remain",
-                        serviceIdType,
-                        preKeyCounts.getEcCount(),
-                        ServiceConfig.PREKEY_MINIMUM_COUNT);
-                preKeyRecords = generatePreKeys(serviceIdType);
-            }
-            if (signedPreKeyNeedsRefresh(serviceIdType)) {
-                logger.debug("Refreshing {} signed pre key.", serviceIdType);
-                signedPreKeyRecord = generateSignedPreKey(serviceIdType, identityKeyPair);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to store new pre keys, resetting preKey id offset", e);
-            account.resetPreKeyOffsets(serviceIdType);
+    private boolean refreshPreKeysIfNecessary(
+            final ServiceIdType serviceIdType,
+            final IdentityKeyPair identityKeyPair,
+            final OneTimePreKeyCounts preKeyCounts,
+            final boolean force
+    ) throws IOException {
+        List<PreKeyRecord> preKeyRecords = null;
+        if (force || preKeyCounts.getEcCount() < ServiceConfig.PREKEY_MINIMUM_COUNT) {
+            logger.debug("Refreshing {} ec pre keys, because only {} of min {} pre keys remain",
+                    serviceIdType,
+                    preKeyCounts.getEcCount(),
+                    ServiceConfig.PREKEY_MINIMUM_COUNT);
             preKeyRecords = generatePreKeys(serviceIdType);
+        }
+
+        SignedPreKeyRecord signedPreKeyRecord = null;
+        if (force || signedPreKeyNeedsRefresh(serviceIdType)) {
+            logger.debug("Refreshing {} signed pre key.", serviceIdType);
             signedPreKeyRecord = generateSignedPreKey(serviceIdType, identityKeyPair);
         }
 
-        try {
-            if (preKeyCounts.getKyberCount() < ServiceConfig.PREKEY_MINIMUM_COUNT) {
-                logger.debug("Refreshing {} kyber pre keys, because only {} of min {} pre keys remain",
-                        serviceIdType,
-                        preKeyCounts.getKyberCount(),
-                        ServiceConfig.PREKEY_MINIMUM_COUNT);
-                kyberPreKeyRecords = generateKyberPreKeys(serviceIdType, identityKeyPair);
-            }
-            if (lastResortKyberPreKeyNeedsRefresh(serviceIdType)) {
-                logger.debug("Refreshing {} last resort kyber pre key.", serviceIdType);
-                lastResortKyberPreKeyRecord = generateLastResortKyberPreKey(serviceIdType, identityKeyPair);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to store new kyber pre keys, resetting preKey id offset", e);
-            account.resetKyberPreKeyOffsets(serviceIdType);
+        List<KyberPreKeyRecord> kyberPreKeyRecords = null;
+        if (force || preKeyCounts.getKyberCount() < ServiceConfig.PREKEY_MINIMUM_COUNT) {
+            logger.debug("Refreshing {} kyber pre keys, because only {} of min {} pre keys remain",
+                    serviceIdType,
+                    preKeyCounts.getKyberCount(),
+                    ServiceConfig.PREKEY_MINIMUM_COUNT);
             kyberPreKeyRecords = generateKyberPreKeys(serviceIdType, identityKeyPair);
-            lastResortKyberPreKeyRecord = generateLastResortKyberPreKey(serviceIdType, identityKeyPair);
         }
 
-        if (signedPreKeyRecord != null
-                || preKeyRecords != null
-                || lastResortKyberPreKeyRecord != null
-                || kyberPreKeyRecords != null) {
-            final var preKeyUpload = new PreKeyUpload(serviceIdType,
-                    signedPreKeyRecord,
-                    preKeyRecords,
-                    lastResortKyberPreKeyRecord,
-                    kyberPreKeyRecords);
-            try {
-                dependencies.getAccountManager().setPreKeys(preKeyUpload);
-            } catch (AuthorizationFailedException e) {
-                // This can happen when the primary device has changed phone number
-                logger.warn("Failed to updated pre keys: {}", e.getMessage());
-            }
+        KyberPreKeyRecord lastResortKyberPreKeyRecord = null;
+        if (force || lastResortKyberPreKeyNeedsRefresh(serviceIdType)) {
+            logger.debug("Refreshing {} last resort kyber pre key.", serviceIdType);
+            lastResortKyberPreKeyRecord = generateLastResortKyberPreKey(serviceIdType,
+                    identityKeyPair,
+                    kyberPreKeyRecords == null ? 0 : kyberPreKeyRecords.size());
         }
+
+        if (signedPreKeyRecord == null
+                && preKeyRecords == null
+                && lastResortKyberPreKeyRecord == null
+                && kyberPreKeyRecords == null) {
+            return false;
+        }
+
+        final var preKeyUpload = new PreKeyUpload(serviceIdType,
+                signedPreKeyRecord,
+                preKeyRecords,
+                lastResortKyberPreKeyRecord,
+                kyberPreKeyRecords);
+        var needsReset = false;
+        try {
+            dependencies.getAccountManager().setPreKeys(preKeyUpload);
+            try {
+                if (preKeyRecords != null) {
+                    account.addPreKeys(serviceIdType, preKeyRecords);
+                }
+                if (signedPreKeyRecord != null) {
+                    account.addSignedPreKey(serviceIdType, signedPreKeyRecord);
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to store new pre keys, resetting preKey id offset", e);
+                account.resetPreKeyOffsets(serviceIdType);
+                needsReset = true;
+            }
+            try {
+                if (kyberPreKeyRecords != null) {
+                    account.addKyberPreKeys(serviceIdType, kyberPreKeyRecords);
+                }
+                if (lastResortKyberPreKeyRecord != null) {
+                    account.addLastResortKyberPreKey(serviceIdType, lastResortKyberPreKeyRecord);
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to store new kyber pre keys, resetting preKey id offset", e);
+                account.resetKyberPreKeyOffsets(serviceIdType);
+                needsReset = true;
+            }
+        } catch (AuthorizationFailedException e) {
+            // This can happen when the primary device has changed phone number
+            logger.warn("Failed to updated pre keys: {}", e.getMessage());
+        } catch (NonSuccessfulResponseCodeException e) {
+            if (serviceIdType != ServiceIdType.PNI || e.getCode() != 422) {
+                throw e;
+            }
+            logger.warn("Failed to set PNI pre keys, ignoring for now. Account needs to be reregistered to fix this.");
+        }
+        return needsReset;
     }
 
     public void cleanOldPreKeys() {
@@ -134,10 +195,7 @@ public class PreKeyHelper {
         final var accountData = account.getAccountData(serviceIdType);
         final var offset = accountData.getPreKeyMetadata().getNextPreKeyId();
 
-        var records = KeyUtils.generatePreKeyRecords(offset);
-        account.addPreKeys(serviceIdType, records);
-
-        return records;
+        return KeyUtils.generatePreKeyRecords(offset);
     }
 
     private boolean signedPreKeyNeedsRefresh(ServiceIdType serviceIdType) {
@@ -159,10 +217,7 @@ public class PreKeyHelper {
         final var accountData = account.getAccountData(serviceIdType);
         final var signedPreKeyId = accountData.getPreKeyMetadata().getNextSignedPreKeyId();
 
-        var record = KeyUtils.generateSignedPreKeyRecord(signedPreKeyId, identityKeyPair.getPrivateKey());
-        account.addSignedPreKey(serviceIdType, record);
-
-        return record;
+        return KeyUtils.generateSignedPreKeyRecord(signedPreKeyId, identityKeyPair.getPrivateKey());
     }
 
     private List<KyberPreKeyRecord> generateKyberPreKeys(
@@ -171,10 +226,7 @@ public class PreKeyHelper {
         final var accountData = account.getAccountData(serviceIdType);
         final var offset = accountData.getPreKeyMetadata().getNextKyberPreKeyId();
 
-        var records = KeyUtils.generateKyberPreKeyRecords(offset, identityKeyPair.getPrivateKey());
-        account.addKyberPreKeys(serviceIdType, records);
-
-        return records;
+        return KeyUtils.generateKyberPreKeyRecords(offset, identityKeyPair.getPrivateKey());
     }
 
     private boolean lastResortKyberPreKeyNeedsRefresh(ServiceIdType serviceIdType) {
@@ -194,15 +246,12 @@ public class PreKeyHelper {
     }
 
     private KyberPreKeyRecord generateLastResortKyberPreKey(
-            ServiceIdType serviceIdType, IdentityKeyPair identityKeyPair
+            ServiceIdType serviceIdType, IdentityKeyPair identityKeyPair, final int offset
     ) {
         final var accountData = account.getAccountData(serviceIdType);
-        final var signedPreKeyId = accountData.getPreKeyMetadata().getNextKyberPreKeyId();
+        final var signedPreKeyId = accountData.getPreKeyMetadata().getNextKyberPreKeyId() + offset;
 
-        var record = KeyUtils.generateKyberPreKeyRecord(signedPreKeyId, identityKeyPair.getPrivateKey());
-        account.addLastResortKyberPreKey(serviceIdType, record);
-
-        return record;
+        return KeyUtils.generateKyberPreKeyRecord(signedPreKeyId, identityKeyPair.getPrivateKey());
     }
 
     private void cleanSignedPreKeys(ServiceIdType serviceIdType) {

@@ -17,6 +17,8 @@ public class Commands {
         addCommand(new FinishChangeNumberCommand());
         addCommand(new FinishLinkCommand());
         addCommand(new GetAttachmentCommand());
+        addCommand(new GetAvatarCommand());
+        addCommand(new GetStickerCommand());
         addCommand(new GetUserStatusCommand());
         addCommand(new AddStickerPackCommand());
         addCommand(new JoinGroupCommand());
@@ -37,6 +39,7 @@ public class Commands {
         addCommand(new RemoteDeleteCommand());
         addCommand(new SendCommand());
         addCommand(new SendContactsCommand());
+        addCommand(new SendMessageRequestResponseCommand());
         addCommand(new SendPaymentNotificationCommand());
         addCommand(new SendReactionCommand());
         addCommand(new SendReceiptCommand());

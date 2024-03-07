@@ -19,6 +19,7 @@ package org.asamk.signal.manager.internal;
 import org.asamk.signal.manager.Manager;
 import org.asamk.signal.manager.api.AlreadyReceivingException;
 import org.asamk.signal.manager.api.AttachmentInvalidException;
+import org.asamk.signal.manager.api.CaptchaRejectedException;
 import org.asamk.signal.manager.api.CaptchaRequiredException;
 import org.asamk.signal.manager.api.Configuration;
 import org.asamk.signal.manager.api.Device;
@@ -38,11 +39,13 @@ import org.asamk.signal.manager.api.InvalidUsernameException;
 import org.asamk.signal.manager.api.LastGroupAdminException;
 import org.asamk.signal.manager.api.Message;
 import org.asamk.signal.manager.api.MessageEnvelope;
+import org.asamk.signal.manager.api.MessageEnvelope.Sync.MessageRequestResponse;
 import org.asamk.signal.manager.api.NonNormalizedPhoneNumberException;
 import org.asamk.signal.manager.api.NotAGroupMemberException;
 import org.asamk.signal.manager.api.NotPrimaryDeviceException;
 import org.asamk.signal.manager.api.Pair;
 import org.asamk.signal.manager.api.PendingAdminApprovalException;
+import org.asamk.signal.manager.api.PhoneNumberSharingMode;
 import org.asamk.signal.manager.api.PinLockedException;
 import org.asamk.signal.manager.api.Profile;
 import org.asamk.signal.manager.api.RateLimitException;
@@ -62,6 +65,7 @@ import org.asamk.signal.manager.api.UpdateGroup;
 import org.asamk.signal.manager.api.UpdateProfile;
 import org.asamk.signal.manager.api.UserStatus;
 import org.asamk.signal.manager.api.UsernameLinkUrl;
+import org.asamk.signal.manager.api.VerificationMethodNotAvailableException;
 import org.asamk.signal.manager.config.ServiceEnvironmentConfig;
 import org.asamk.signal.manager.helper.AccountFileUpdater;
 import org.asamk.signal.manager.helper.Context;
@@ -104,6 +108,7 @@ import org.whispersystems.signalservice.internal.util.Util;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -276,12 +281,26 @@ public class ManagerImpl implements Manager {
     }
 
     @Override
-    public void updateAccountAttributes(String deviceName, Boolean unrestrictedUnidentifiedSender) throws IOException {
+    public void updateAccountAttributes(
+            String deviceName,
+            Boolean unrestrictedUnidentifiedSender,
+            final Boolean discoverableByNumber,
+            final Boolean numberSharing
+    ) throws IOException {
         if (deviceName != null) {
             context.getAccountHelper().setDeviceName(deviceName);
         }
         if (unrestrictedUnidentifiedSender != null) {
             account.setUnrestrictedUnidentifiedAccess(unrestrictedUnidentifiedSender);
+        }
+        if (discoverableByNumber != null) {
+            account.getConfigurationStore().setPhoneNumberUnlisted(!discoverableByNumber);
+        }
+        if (numberSharing != null) {
+            account.getConfigurationStore()
+                    .setPhoneNumberSharingMode(numberSharing
+                            ? PhoneNumberSharingMode.EVERYBODY
+                            : PhoneNumberSharingMode.NOBODY);
         }
         context.getAccountHelper().updateAccountAttributes();
         context.getAccountHelper().checkWhoAmiI();
@@ -343,7 +362,11 @@ public class ManagerImpl implements Manager {
     @Override
     public void setUsername(final String username) throws IOException, InvalidUsernameException {
         try {
-            context.getAccountHelper().reserveUsername(username);
+            if (username.contains(".")) {
+                context.getAccountHelper().reserveExactUsername(username);
+            } else {
+                context.getAccountHelper().reserveUsernameFromNickname(username);
+            }
         } catch (BaseUsernameException e) {
             throw new InvalidUsernameException(e.getMessage() + " (" + e.getClass().getSimpleName() + ")", e);
         }
@@ -357,7 +380,7 @@ public class ManagerImpl implements Manager {
     @Override
     public void startChangeNumber(
             String newNumber, boolean voiceVerification, String captcha
-    ) throws RateLimitException, IOException, CaptchaRequiredException, NonNormalizedPhoneNumberException, NotPrimaryDeviceException {
+    ) throws RateLimitException, IOException, CaptchaRequiredException, NonNormalizedPhoneNumberException, NotPrimaryDeviceException, VerificationMethodNotAvailableException {
         if (!account.isPrimaryDevice()) {
             throw new NotPrimaryDeviceException();
         }
@@ -385,10 +408,16 @@ public class ManagerImpl implements Manager {
     }
 
     @Override
-    public void submitRateLimitRecaptchaChallenge(String challenge, String captcha) throws IOException {
+    public void submitRateLimitRecaptchaChallenge(
+            String challenge, String captcha
+    ) throws IOException, CaptchaRejectedException {
         captcha = captcha == null ? null : captcha.replace("signalcaptcha://", "");
 
-        dependencies.getAccountManager().submitRateLimitRecaptchaChallenge(challenge, captcha);
+        try {
+            dependencies.getAccountManager().submitRateLimitRecaptchaChallenge(challenge, captcha);
+        } catch (org.whispersystems.signalservice.api.push.exceptions.CaptchaRejectedException ignored) {
+            throw new CaptchaRejectedException();
+        }
     }
 
     @Override
@@ -414,7 +443,10 @@ public class ManagerImpl implements Manager {
     }
 
     @Override
-    public void removeLinkedDevices(int deviceId) throws IOException {
+    public void removeLinkedDevices(int deviceId) throws IOException, NotPrimaryDeviceException {
+        if (!account.isPrimaryDevice()) {
+            throw new NotPrimaryDeviceException();
+        }
         context.getAccountHelper().removeLinkedDevices(deviceId);
     }
 
@@ -859,6 +891,41 @@ public class ManagerImpl implements Manager {
     }
 
     @Override
+    public SendMessageResults sendMessageRequestResponse(
+            final MessageRequestResponse.Type type, final Set<RecipientIdentifier> recipients
+    ) {
+        var results = new HashMap<RecipientIdentifier, List<SendMessageResult>>();
+        for (final var recipient : recipients) {
+            if (recipient instanceof RecipientIdentifier.NoteToSelf || (
+                    recipient instanceof RecipientIdentifier.Single single
+                            && new RecipientAddress(single.toPartialRecipientAddress()).matches(account.getSelfRecipientAddress())
+            )) {
+                final var result = context.getSyncHelper()
+                        .sendMessageRequestResponse(type, account.getSelfRecipientId());
+                if (result != null) {
+                    results.put(recipient, List.of(toSendMessageResult(result)));
+                }
+                results.put(recipient, List.of(toSendMessageResult(result)));
+            } else if (recipient instanceof RecipientIdentifier.Single single) {
+                try {
+                    final var recipientId = context.getRecipientHelper().resolveRecipient(single);
+                    final var result = context.getSyncHelper().sendMessageRequestResponse(type, recipientId);
+                    if (result != null) {
+                        results.put(recipient, List.of(toSendMessageResult(result)));
+                    }
+                } catch (UnregisteredRecipientException e) {
+                    results.put(recipient,
+                            List.of(SendMessageResult.unregisteredFailure(single.toPartialRecipientAddress())));
+                }
+            } else if (recipient instanceof RecipientIdentifier.Group group) {
+                final var result = context.getSyncHelper().sendMessageRequestResponse(type, group.groupId());
+                results.put(recipient, List.of(toSendMessageResult(result)));
+            }
+        }
+        return new SendMessageResults(0, results);
+    }
+
+    @Override
     public void hideRecipient(final RecipientIdentifier.Single recipient) {
         final var recipientIdOptional = context.getRecipientHelper().resolveRecipientOptional(recipient);
         if (recipientIdOptional.isPresent()) {
@@ -913,6 +980,10 @@ public class ManagerImpl implements Manager {
                 continue;
             }
             context.getContactHelper().setContactBlocked(recipientId, blocked);
+            context.getSyncHelper()
+                    .sendMessageRequestResponse(blocked
+                            ? MessageRequestResponse.Type.BLOCK
+                            : MessageRequestResponse.Type.UNBLOCK_AND_ACCEPT, recipientId);
             // if we don't have a common group with the blocked contact we need to rotate the profile key
             shouldRotateProfileKey = blocked && (
                     shouldRotateProfileKey || account.getGroupStore()
@@ -941,6 +1012,10 @@ public class ManagerImpl implements Manager {
                 continue;
             }
             context.getGroupHelper().setGroupBlocked(groupId, blocked);
+            context.getSyncHelper()
+                    .sendMessageRequestResponse(blocked
+                            ? MessageRequestResponse.Type.BLOCK
+                            : MessageRequestResponse.Type.UNBLOCK_AND_ACCEPT, groupId);
             shouldRotateProfileKey = blocked;
         }
         if (shouldRotateProfileKey) {
@@ -1313,7 +1388,7 @@ public class ManagerImpl implements Manager {
         final var recipientId = context.getRecipientHelper().resolveRecipient(recipient);
         final var updated = trustMethod.apply(recipientId);
         if (updated && this.isReceiving()) {
-            context.getReceiveHelper().setNeedsToRetryFailedMessages(true);
+            account.setNeedsToRetryFailedMessages(true);
         }
         return updated;
     }
@@ -1335,6 +1410,58 @@ public class ManagerImpl implements Manager {
     @Override
     public InputStream retrieveAttachment(final String id) throws IOException {
         return context.getAttachmentHelper().retrieveAttachment(id).getStream();
+    }
+
+    @Override
+    public InputStream retrieveContactAvatar(final RecipientIdentifier.Single recipient) throws IOException, UnregisteredRecipientException {
+        final var recipientId = context.getRecipientHelper().resolveRecipient(recipient);
+        final var address = account.getRecipientStore().resolveRecipientAddress(recipientId);
+        final var streamDetails = context.getAvatarStore().retrieveContactAvatar(address);
+        if (streamDetails == null) {
+            throw new FileNotFoundException();
+        }
+        return streamDetails.getStream();
+    }
+
+    @Override
+    public InputStream retrieveProfileAvatar(final RecipientIdentifier.Single recipient) throws IOException, UnregisteredRecipientException {
+        final var recipientId = context.getRecipientHelper().resolveRecipient(recipient);
+        context.getProfileHelper().getRecipientProfile(recipientId);
+        final var address = account.getRecipientStore().resolveRecipientAddress(recipientId);
+        final var streamDetails = context.getAvatarStore().retrieveProfileAvatar(address);
+        if (streamDetails == null) {
+            throw new FileNotFoundException();
+        }
+        return streamDetails.getStream();
+    }
+
+    @Override
+    public InputStream retrieveGroupAvatar(final GroupId groupId) throws IOException {
+        final var streamDetails = context.getAvatarStore().retrieveGroupAvatar(groupId);
+        context.getGroupHelper().getGroup(groupId);
+        if (streamDetails == null) {
+            throw new FileNotFoundException();
+        }
+        return streamDetails.getStream();
+    }
+
+    @Override
+    public InputStream retrieveSticker(final StickerPackId stickerPackId, final int stickerId) throws IOException {
+        var streamDetails = context.getStickerPackStore().retrieveSticker(stickerPackId, stickerId);
+        if (streamDetails == null) {
+            final var pack = account.getStickerStore().getStickerPack(stickerPackId);
+            if (pack != null) {
+                try {
+                    context.getStickerHelper().retrieveStickerPack(stickerPackId, pack.packKey());
+                } catch (InvalidMessageException e) {
+                    logger.warn("Failed to download sticker pack");
+                }
+            }
+        }
+        if (streamDetails == null) {
+            throw new FileNotFoundException();
+        }
+        return streamDetails.getStream();
     }
 
     @Override
